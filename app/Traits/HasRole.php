@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\Role;
+use App\Models\Project;
 use Cache;
 
 trait HasRole
@@ -62,6 +63,14 @@ trait HasRole
      */
     final public function hasProjectRole(Role|array $role, int $projectId): bool
     {
+        $ownsProject = $this->relationLoaded('ownedProjects')
+            ? $this->ownedProjects->where(app(Project::class)->getKeyName(), $projectId)->isNotEmpty()
+            : $this->ownedProjects()->whereKey($projectId)->exists();
+
+        if ($ownsProject) {
+            return true;
+        }
+
         $self = $this;
         $roles = Cache::store('octane')->remember(
             "role_project_$self->id",

@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property string $source
  * @property int|null $default_priority_id
  * @property ScreenshotsState $screenshots_state
+ * @property-read User $createdBy
  * @property-read Priority|null $defaultPriority
  * @property-read array $can
  * @property-read int|null $roles_count
@@ -87,6 +88,7 @@ class Project extends Model
         'default_priority_id',
         'screenshots_state',
         'group',
+        'created_by',
     ];
 
     /**
@@ -117,6 +119,10 @@ class Project extends Model
         parent::boot();
 
         static::addGlobalScope(new ProjectAccessScope);
+
+        static::creating(static function (Project $project) {
+            $project->created_by = auth()->user()?->getKey() ?? 1;
+        });
 
         static::deleting(static function (Project $project) {
             CronTaskWorkers::whereHas(
@@ -179,6 +185,11 @@ class Project extends Model
         return $this->hasManyThrough(CronTaskWorkers::class, Task::class);
     }
 
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function tasksRelations(): Attribute
     {
         $tasksIdsQuery = $this->tasks()->select('id');
@@ -193,11 +204,11 @@ class Project extends Model
         return Attribute::make(
             get: static function ($value): ScreenshotsState {
                 $projectState = ScreenshotsState::withGlobalOverrides($value);
-                return match ($projectState) {
+                return (match ($projectState) {
                     null => ScreenshotsState::REQUIRED,
                     ScreenshotsState::ANY => ScreenshotsState::OPTIONAL,
                     default => $projectState,
-                };
+                });
             },
             set: static fn ($value) => (string)ScreenshotsState::getNormalizedValue($value),
         )->shouldCache();
