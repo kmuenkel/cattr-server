@@ -11,8 +11,6 @@ use Tests\TestCase;
 
 class RemoveTest extends TestCase
 {
-    private const URI = 'projects/remove';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */

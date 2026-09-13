@@ -11,8 +11,6 @@ use Tests\TestCase;
 
 class ListTest extends TestCase
 {
-    private const URI = 'tasks/list';
-
     private const TASKS_AMOUNT = 10;
 
     /** @var User $admin */

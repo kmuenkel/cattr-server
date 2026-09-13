@@ -11,8 +11,6 @@ use Tests\TestCase;
 
 class TasksTest extends TestCase
 {
-    private const URI = 'time/tasks';
-
     private const INTERVALS_AMOUNT = 10;
 
     private Collection $intervals;

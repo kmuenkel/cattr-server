@@ -8,8 +8,6 @@ use Tests\TestCase;
 
 class CountTest extends TestCase
 {
-    private const URI = 'users/count';
-
     private const USERS_AMOUNT = 10;
 
     private User $admin;

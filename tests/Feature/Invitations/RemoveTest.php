@@ -13,8 +13,6 @@ class RemoveTest extends TestCase
 {
     use WithFaker;
 
-    private const URI = 'invitations/remove';
-
     private User $admin;
     private User $manager;
     private User $auditor;

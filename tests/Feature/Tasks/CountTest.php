@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class CountTest extends TestCase
 {
-    private const URI = 'tasks/count';
-
     private const TASKS_AMOUNT = 10;
 
     private User $admin;
