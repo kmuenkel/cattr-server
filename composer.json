@@ -19,6 +19,7 @@
     "ext-openssl": "*",
     "ext-pdo": "*",
     "ext-zip": "*",
+    "arquivei/laravel-prometheus-exporter": "*",
     "czproject/git-php": "^4.0",
     "doctrine/dbal": "^3.0",
     "elhebert/laravel-sri": "^3.2",
@@ -41,8 +42,8 @@
     "sentry/sentry-laravel": "^4.1",
     "spatie/temporary-directory": "^2.2",
     "staudenmeir/laravel-adjacency-list": "^1.19",
-    "wikimedia/composer-merge-plugin": "^2.0",
-    "vermorag/laravel-prometheus-exporter": "^4.1"
+    "tymon/jwt-auth": "^2.3",
+    "wikimedia/composer-merge-plugin": "^2.0"
   },
   "require-dev": {
     "barryvdh/laravel-ide-helper": "^2.13",
@@ -85,8 +86,17 @@
     "dumperd": [
       "@php artisan generate:erd erd.svg --format=svg"
     ],
-    "kg": [
-      "@php artisan key:generate --ansi"
+    "post-install-cmd" : [
+      "yarn"
+    ],
+    "post-create-project-cmd": [
+      "@php artisan storage:link",
+      "@php artisan key:generate --ansi",
+      "@php artisan jwt:secret"
+    ],
+    "init": [
+      "@php artisan migrate --seed --seeder=InitialSeeder",
+      "@php artisan cattr:make:admin"
     ]
   },
   "config": {

@@ -19,14 +19,13 @@ The demo app is available here: [demo.cattr.app](https://demo.cattr.app)
 
 ```
 composer install
-php artisan key:generate
 yarn
 ```
 
 After should be edited `.env` file (e.g. for DB connection), look at `.env.example` for examples
 
 ```
-php artisan migrate --seed --seeder=InitialSeeder
+composer init
 ```
 
 App will not start without seeding of InitialSeeder
