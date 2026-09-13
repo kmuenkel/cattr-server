@@ -51,11 +51,11 @@
                 return this.user.email;
             },
             src() {
-                if (this.user.email) {
-                    const emailMD5 = md5(this.email);
-
-                    return `https://www.gravatar.com/avatar/${emailMD5}?d=404`;
-                }
+                // if (this.user.email) {
+                //     const emailMD5 = md5(this.email);
+                //
+                //     return `https://www.gravatar.com/avatar/${emailMD5}?d=404`;
+                // }
 
                 return null;
             },

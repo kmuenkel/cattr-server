@@ -335,7 +335,7 @@
                         if (
                             response &&
                             Object.prototype.hasOwnProperty.call(response, 'data') &&
-                            response.data.error_type === 'query.item_not_found'
+                            response.data.error?.code === 'query.item_not_found'
                         ) {
                             this.$router.replace({ name: 'forbidden' });
                         }

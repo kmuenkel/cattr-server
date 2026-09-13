@@ -163,7 +163,7 @@
                     const { data } = (await this.service.getItem(id, this.filters)).data;
                     this.values = data;
                 } catch ({ response }) {
-                    if (response.data.error_type === 'query.item_not_found') {
+                    if (response.data.error?.code === 'query.item_not_found') {
                         this.$router.replace({ name: 'forbidden' });
                     }
                 }

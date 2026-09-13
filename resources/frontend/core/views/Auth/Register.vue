@@ -164,7 +164,7 @@
             async validateToken() {
                 try {
                     const { data } = await axios.get(`/auth/register/${this.token}`);
-                    this.email = data.email;
+                    this.email = data.data.email;
                     this.isTokenValid = true;
                 } catch ({ response }) {
                     if (response.status === 404) {

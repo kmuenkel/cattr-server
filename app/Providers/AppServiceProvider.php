@@ -5,6 +5,7 @@ namespace App\Providers;
 use App;
 use App\Models\Property;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Telescope\Avatar;
 use Laravel\Tinker\TinkerServiceProvider;
 use Settings;
 
@@ -28,5 +29,7 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(TelescopeServiceProvider::class);
             $this->app->register(TinkerServiceProvider::class);
         }
+
+        Avatar::register(fn (int $userId, string $email) => null);
     }
 }
