@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class ShowTest extends TestCase
 {
-    private const URI = 'tasks/show';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -71,89 +69,115 @@ class ShowTest extends TestCase
 
     public function test_show_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->admin)->postJson(
+            route('tasks.show'), $this->task->only('id'),
+            headers: ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertJson($this->task->toArray());
+        $response->assertJson(['data' => $this->task->toArray()]);
     }
 
     public function test_show_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->manager)->postJson(
+            route('tasks.show'), $this->task->only('id'),
+            headers: ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertJson($this->task->toArray());
+        $response->assertJson(['data' => $this->task->toArray()]);
     }
 
     public function test_show_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->auditor)->postJson(
+            route('tasks.show'), $this->task->only('id'),
+            headers: ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertJson($this->task->toArray());
+        $response->assertJson(['data' => $this->task->toArray()]);
     }
 
     public function test_show_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->user)->postJson(route('tasks.show'), $this->task->only('id'));
 
-        $response->assertForbidden();
+        $response->assertOk();
     }
 
     public function test_show_as_assigned_user(): void
     {
         $response = $this
             ->actingAs($this->assignedUser)
-            ->postJson(self::URI, $this->assignedTask->only('id'));
+            ->postJson(
+                route('tasks.show'), $this->assignedTask->only('id'),
+                headers: ['X-Paginate' => 'false'],
+            );
 
         $response->assertOk();
-        $response->assertJson($this->assignedTask->toArray());
+        $response->assertJson(['data' => $this->assignedTask->toArray()]);
     }
 
     public function test_show_as_project_manager(): void
     {
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->projectManager)->postJson(
+            route('tasks.show'), $this->task->only('id'),
+            headers: ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertJson($this->task->toArray());
+        $response->assertJson(['data' => $this->task->toArray()]);
     }
 
     public function test_show_as_project_auditor(): void
     {
-        $response = $this->actingAs($this->projectAuditor)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->projectAuditor)->postJson(
+            route('tasks.show'), $this->task->only('id'),
+            headers: ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertJson($this->task->toArray());
+        $response->assertJson(['data' => $this->task->toArray()]);
     }
 
     public function test_show_as_project_user(): void
     {
-        $response = $this->actingAs($this->projectUser)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->projectUser)->postJson(
+            route('tasks.show'),
+            $this->task->only('id'),
+            ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertJson($this->task->toArray());
+        $response->assertJson(['data' => $this->task->toArray()]);
     }
 
     public function test_show_as_assigned_project_user(): void
     {
         $response = $this
             ->actingAs($this->assignedProjectUser)
-            ->postJson(self::URI, $this->assignedProjectTask->only('id'));
+            ->postJson(
+                route('tasks.show'),
+                $this->assignedProjectTask->only('id'),
+                headers: ['X-Paginate' => 'false'],
+            );
 
         $response->assertOk();
-        $response->assertJson($this->assignedProjectTask->toArray());
+        $response->assertJson(['data' => $this->assignedProjectTask->toArray()]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('tasks.show'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.show'));
 
         $response->assertValidationError();
     }

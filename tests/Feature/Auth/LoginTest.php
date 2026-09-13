@@ -9,9 +9,6 @@ use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
-    private const URI = 'auth/login';
-    private const TEST_URI = 'auth/me';
-
     private User $user;
 
     private array $loginData;
@@ -33,16 +30,16 @@ class LoginTest extends TestCase
 
     public function test_success(): void
     {
-        $response = $this->postJson(self::URI, $this->loginData);
+        $response = $this->postJson(route('auth.login'), $this->loginData);
         $response->assertOk();
 
-        $this->actingAs($response->decodeResponseJson()['access_token'])->get(self::TEST_URI)->assertOk();
+        $this->actingAs($response->decodeResponseJson()['data']['access_token'])->get(route('auth.me'))->assertOk();
     }
 
     public function test_wrong_credentials(): void
     {
         $this->loginData['password'] = 'wrong_password';
-        $response = $this->postJson(self::URI, $this->loginData);
+        $response = $this->postJson(route('auth.login'), $this->loginData);
 
         $response->assertUnauthorized();
     }
@@ -51,7 +48,7 @@ class LoginTest extends TestCase
     {
         $this->user->active = false;
         $this->user->save();
-        $response = $this->postJson(self::URI, $this->loginData);
+        $response = $this->postJson(route('auth.login'), $this->loginData);
 
         $response->assertForbidden('authorization.user_disabled', false);
     }
@@ -59,16 +56,16 @@ class LoginTest extends TestCase
     public function test_soft_deleted_user(): void
     {
         $this->user->delete();
-        $response = $this->postJson(self::URI, $this->loginData);
+        $response = $this->postJson(route('auth.login'), $this->loginData);
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('auth.login'));
 
-        $response->assertError(self::HTTP_BAD_REQUEST);
+        $response->assertError(self::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function test_recaptcha(): void
@@ -82,16 +79,16 @@ class LoginTest extends TestCase
             self::CAPTCHA_CACHE_KEY
         );
 
-        $this->assertFalse(Cache::has($cacheKey));
+        $this->assertFalse(Cache::store('octane')->has($cacheKey));
 
         $this->loginData['password'] = 'wrong_password';
-        $this->postJson(self::URI, $this->loginData);
+        $this->postJson(route('auth.login'), $this->loginData);
 
-        $this->assertTrue(Cache::has($cacheKey));
+        $this->assertTrue(Cache::store('octane')->has($cacheKey));
 
-        $this->assertEquals(1, Cache::get($cacheKey));
+        $this->assertEquals(1, Cache::store('octane')->get($cacheKey));
 
-        $response = $this->postJson(self::URI, $this->loginData);
+        $response = $this->postJson(route('auth.login'), $this->loginData);
 
         $response->assertError(self::HTTP_TOO_MANY_REQUESTS, 'authorization.captcha');
     }
@@ -105,21 +102,21 @@ class LoginTest extends TestCase
 
         $cacheKey = str_replace('{ip}', '127.0.0.1', self::BAN_CACHE_KEY);
 
-        $this->assertFalse(Cache::has($cacheKey));
+        $this->assertFalse(Cache::store('octane')->has($cacheKey));
 
         $this->loginData['password'] = 'wrong_password';
-        $this->postJson(self::URI, $this->loginData);
+        $this->postJson(route('auth.login'), $this->loginData);
 
-        $this->assertTrue(Cache::has($cacheKey));
+        $this->assertTrue(Cache::store('octane')->has($cacheKey));
 
-        $cacheResponse = Cache::get($cacheKey);
+        $cacheResponse = Cache::store('octane')->get($cacheKey);
 
         $this->assertArrayHasKey('amounts', $cacheResponse);
         $this->assertArrayHasKey('time', $cacheResponse);
 
         $this->assertEquals(1, $cacheResponse['amounts']);
 
-        $response = $this->postJson(self::URI, $this->loginData);
+        $response = $this->postJson(route('auth.login'), $this->loginData);
 
         $response->assertError(self::HTTP_LOCKED, 'authorization.banned');
     }

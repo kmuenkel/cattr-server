@@ -11,8 +11,6 @@ use Tests\TestCase;
 
 class CountTest extends TestCase
 {
-    private const URI = 'time-intervals/count';
-
     private const SCREENSHOTS_AMOUNT = 10;
 
     private User $admin;
@@ -28,15 +26,15 @@ class CountTest extends TestCase
 
     public function test_count(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('intervals.count'));
 
         $response->assertOk();
-        $response->assertJson(['total' => TimeInterval::count()]);
+        $response->assertJson(['data' => ['total' => TimeInterval::count()]]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('intervals.count'));
 
         $response->assertUnauthorized();
     }

@@ -8,8 +8,6 @@ use Tests\TestCase;
 
 class IndexTest extends TestCase
 {
-    private const URI = 'company-settings';
-
     private User $admin;
     private User $user;
 
@@ -23,14 +21,14 @@ class IndexTest extends TestCase
 
     public function test_index_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('settings.list'));
 
         $response->assertOk();
     }
 
     public function test_index_as_user(): void
     {
-        $response = $this->actingAs($this->user)->getJson(self::URI);
+        $response = $this->actingAs($this->user)->getJson(route('settings.list'));
 
         $response->assertOk();
     }

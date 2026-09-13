@@ -2,11 +2,13 @@
 
 namespace Tests\Factories;
 
+use App\Enums\Role;
 use App\Enums\ScreenshotsState;
 use App\Models\User;
 use Carbon\Carbon;
 use Faker\Factory as FakerFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserFactory extends Factory
@@ -34,10 +36,19 @@ class UserFactory extends Factory
         if ($this->isAdmin) {
             $modelData['is_admin'] = true;
         }
-        $this->user = User::create($modelData);
+        $this->user = User::firstOrCreate(['email' => $modelData['email']], $modelData);
 
         if ($this->tokensAmount) {
             $this->createTokens();
+
+            $tokens = cache("testing:{$this->user->id}:tokens");
+
+            array_map(fn (array $token) => $this->user->tokens()->create([
+                'name' => Str::uuid(),
+                'token' => hash('sha256', $token['token']),
+                'abilities' => ['*'],
+                'expires_at' => $token['expires_at'],
+            ]), $tokens);
         }
 
         if ($this->roleId) {
@@ -66,7 +77,7 @@ class UserFactory extends Factory
             'url' => '',
             'company_id' => 1,
             'avatar' => '',
-            'screenshots_state' => ScreenshotsState::REQUIRED,
+            'screenshots_state' => ScreenshotsState::REQUIRED->value,
             'manual_time' => 0,
             'computer_time_popup' => 300,
             'blur_screenshots' => 0,
@@ -75,7 +86,7 @@ class UserFactory extends Factory
             'active' => 1,
             'password' => $fullName,
             'user_language' => 'en',
-            'role_id' => 2,
+            'role_id' => $this->roleId ?? Role::USER->value,
             'type' => 'employee',
             'nonce' => 0,
             'last_activity' => Carbon::now()->subMinutes(rand(1, 55)),
@@ -93,7 +104,7 @@ class UserFactory extends Factory
             'password' => $faker->password,
             'screenshots_interval' => 5,
             'user_language' => 'en',
-            'screenshots_state' => ScreenshotsState::REQUIRED,
+            'screenshots_state' => ScreenshotsState::REQUIRED->value,
             'computer_time_popup' => 10,
             'timezone' => 'UTC',
             'role_id' => 2,
@@ -109,26 +120,26 @@ class UserFactory extends Factory
 
     public function asAdmin(): self
     {
-        $this->roleId = self::USER_ROLE;
+        $this->roleId = Role::ADMIN->value;
         $this->isAdmin = true;
         return $this;
     }
 
     public function asManager(): self
     {
-        $this->roleId = self::MANAGER_ROLE;
+        $this->roleId = Role::MANAGER->value;
         return $this;
     }
 
     public function asAuditor(): self
     {
-        $this->roleId = self::AUDITOR_ROLE;
+        $this->roleId = Role::AUDITOR->value;
         return $this;
     }
 
     public function asUser(): self
     {
-        $this->roleId = self::USER_ROLE;
+        $this->roleId = Role::USER->value;
         return $this;
     }
 

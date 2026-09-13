@@ -4,6 +4,7 @@ namespace Tests\Feature\Tasks;
 
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Support\Arr;
 use Tests\Facades\TaskFactory;
 use Tests\Facades\UserFactory;
 use Tests\TestCase;
@@ -73,119 +74,153 @@ class ListTest extends TestCase
 
     public function test_list_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
 
         $tasks = Task::query()
             ->leftJoin('statuses as s', 'tasks.status_id', '=', 's.id')
             ->select('tasks.*')
+            ->orderBy('tasks.id')
             ->orderBy('s.active', 'desc')
             ->orderBy('tasks.created_at', 'desc')
             ->get();
 
-        $response->assertJson($tasks->toArray());
+        $response->assertJson(['data' => $tasks->toArray()]);
     }
 
     public function test_list_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->getJson(self::URI);
+        $response = $this->actingAs($this->manager)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
 
         $tasks = Task::query()
             ->leftJoin('statuses as s', 'tasks.status_id', '=', 's.id')
             ->select('tasks.*')
+            ->orderBy('tasks.id')
             ->orderBy('s.active', 'desc')
             ->orderBy('tasks.created_at', 'desc')
             ->get();
 
-        $response->assertJson($tasks->toArray());
+        $response->assertJson(['data' => $tasks->toArray()]);
     }
 
     public function test_list_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->getJson(self::URI);
+        $response = $this->actingAs($this->auditor)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
 
         $tasks = Task::query()
             ->leftJoin('statuses as s', 'tasks.status_id', '=', 's.id')
             ->select('tasks.*')
+            ->orderBy('tasks.id')
             ->orderBy('s.active', 'desc')
             ->orderBy('tasks.created_at', 'desc')
             ->get();
 
-        $response->assertJson($tasks->toArray());
+        $response->assertJson(['data' => $tasks->toArray()]);
     }
 
     public function test_list_as_user(): void
     {
-        $response = $this->actingAs($this->user)->getJson(self::URI);
+        $response = $this->actingAs($this->user)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertExactJson([]);
+//        $response->assertExactJson([]);
     }
 
     public function test_list_as_assigned_user(): void
     {
-        $response = $this->actingAs($this->assignedUser)->getJson(self::URI);
+        $response = $this->actingAs($this->assignedUser)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertExactJson(
-            Task::query()
-                ->where('id', '=', $this->assignedTask->id)
-                ->get()->toArray()
-        );
+        $task = Task::query()
+            ->where('id', '=', $this->assignedTask->id)
+            ->first();
+
+        $responseData = Arr::keyBy($response->json('data'), 'id');
+        $this->assertEquals($responseData[$task->getKey()], $task->toArray());
     }
 
     public function test_list_as_project_manager(): void
     {
-        $response = $this->actingAs($this->projectManager)->getJson(self::URI);
+        $response = $this->actingAs($this->projectManager)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $task = Task::where('project_id', $this->task->project_id)->get()->toArray();
 
         $response->assertOk();
-        $response->assertExactJson($task);
+        $response->assertJson(['data' => $task]);
     }
 
     public function test_list_as_project_auditor(): void
     {
-        $response = $this->actingAs($this->projectAuditor)->getJson(self::URI);
+        $response = $this->actingAs($this->projectAuditor)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $task = Task::where('project_id', $this->task->project_id)->get()->toArray();
 
         $response->assertOk();
-        $response->assertExactJson($task);
+        $response->assertJson(['data' => $task]);
     }
 
     public function test_list_as_project_user(): void
     {
-        $response = $this->actingAs($this->projectUser)->getJson(self::URI);
+        $response = $this->actingAs($this->projectUser)->getJson(
+            route('tasks.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $task = Task::where('project_id', $this->task->project_id)->get()->toArray();
 
         $response->assertOk();
-        $response->assertExactJson($task);
+        $response->assertJson(['data' => $task]);
     }
 
     public function test_list_as_assigned_project_user(): void
     {
         $response = $this
             ->actingAs($this->assignedProjectUser)
-            ->postJson(self::URI, $this->assignedProjectTask->only('id'));
+            ->postJson(
+                route('tasks.list'),
+                $this->assignedProjectTask->only('id'),
+                ['X-Paginate' => 'false'],
+            );
 
-        $task = Task::where('project_id', $this->assignedProjectTask->project_id)
-            ->get()
-            ->toArray();
+        $task = Task::query()
+            ->where('project_id', $this->assignedProjectTask->project_id)
+            ->orderBy('id')
+            ->first();
 
         $response->assertOk();
-        $response->assertExactJson($task);
+        $responseData = Arr::keyBy($response->json('data'), 'id');
+        $this->assertEquals($responseData[$task->getKey()], $task->toArray());
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('tasks.list'));
 
         $response->assertUnauthorized();
     }

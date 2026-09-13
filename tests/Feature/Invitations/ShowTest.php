@@ -9,8 +9,6 @@ use Tests\TestCase;
 
 class ShowTest extends TestCase
 {
-    private const URI = 'invitations/show';
-
     private User $admin;
     private User $manager;
     private User $auditor;
@@ -31,36 +29,36 @@ class ShowTest extends TestCase
 
     public function test_show_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->invitation->only('id'));
+        $response = $this->actingAs($this->admin)->postJson(route('invitations.show'), $this->invitation->only('id'));
 
         $response->assertOk();
-        $response->assertJson($this->invitation->toArray());
+        $response->assertJson(['data' => $this->invitation->toArray()]);
     }
 
     public function test_show_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->invitation->only('id'));
+        $response = $this->actingAs($this->manager)->postJson(route('invitations.show'), $this->invitation->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_show_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->invitation->only('id'));
+        $response = $this->actingAs($this->auditor)->postJson(route('invitations.show'), $this->invitation->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_show_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->invitation->only('id'));
+        $response = $this->actingAs($this->user)->postJson(route('invitations.show'), $this->invitation->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('invitations.show'));
 
         $response->assertUnauthorized();
     }

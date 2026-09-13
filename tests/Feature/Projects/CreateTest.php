@@ -3,14 +3,13 @@
 namespace Tests\Feature\Projects;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 use Tests\Facades\ProjectFactory;
 use Tests\Facades\UserFactory;
 use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    private const URI = 'projects/create';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -32,16 +31,17 @@ class CreateTest extends TestCase
         $this->user = UserFactory::refresh()->asUser()->withTokens()->create();
 
         $this->projectData = ProjectFactory::createRandomModelData();
+        Event::fake();
     }
 
     public function test_create_as_admin(): void
     {
         $this->assertDatabaseMissing('projects', $this->projectData);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->projectData);
+        $response = $this->actingAs($this->admin)->postJson(route('projects.create'), $this->projectData);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->projectData]);
+        $this->assertEmpty(array_diff_assoc($this->projectData, $response->json('data')));
         $this->assertDatabaseHas('projects', $this->projectData);
     }
 
@@ -49,10 +49,10 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('projects', $this->projectData);
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->projectData);
+        $response = $this->actingAs($this->manager)->postJson(route('projects.create'), $this->projectData);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->projectData]);
+        $response->assertJson(['data' => $this->projectData]);
         $this->assertDatabaseHas('projects', $this->projectData);
     }
 
@@ -60,7 +60,7 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('projects', $this->projectData);
 
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->projectData);
+        $response = $this->actingAs($this->auditor)->postJson(route('projects.create'), $this->projectData);
 
         $response->assertForbidden();
     }
@@ -69,21 +69,21 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('projects', $this->projectData);
 
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->projectData);
+        $response = $this->actingAs($this->user)->postJson(route('projects.create'), $this->projectData);
 
         $response->assertForbidden();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('projects.create'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('projects.create'));
 
         $response->assertValidationError();
     }

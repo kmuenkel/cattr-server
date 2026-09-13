@@ -8,8 +8,6 @@ use Tests\TestCase;
 
 class SendInviteTest extends TestCase
 {
-    private const URI = 'users/send-invite';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -31,28 +29,28 @@ class SendInviteTest extends TestCase
 
     public function test_send_invite_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->admin)->postJson(route('users.invite'), $this->user->only('id'));
 
-        $response->assertOk();
+        $response->assertNoContent();
     }
 
     public function test_send_invite_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->manager)->postJson(route('users.invite'), $this->user->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_send_invite_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->auditor)->postJson(route('users.invite'), $this->user->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_send_invite_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->user)->postJson(route('users.invite'), $this->user->only('id'));
 
         $response->assertForbidden();
     }

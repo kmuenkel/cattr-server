@@ -11,8 +11,6 @@ class UpdateTest extends TestCase
 {
     use WithFaker;
 
-    private const URI = 'company-settings';
-
     private User $admin;
     private User $user;
 
@@ -26,14 +24,14 @@ class UpdateTest extends TestCase
 
     public function test_index_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->patchJson(self::URI);
+        $response = $this->actingAs($this->admin)->patchJson(route('settings.save'));
 
-        $response->assertOk();
+        $response->assertNoContent();
     }
 
     public function test_index_wrong_params(): void
     {
-        $response = $this->actingAs($this->admin)->patchJson(self::URI, [
+        $response = $this->actingAs($this->admin)->patchJson(route('settings.save'), [
             'timezone' => $this->faker->text,
         ]);
 
@@ -42,7 +40,7 @@ class UpdateTest extends TestCase
 
     public function test_index_as_user(): void
     {
-        $response = $this->actingAs($this->user)->patchJson(self::URI);
+        $response = $this->actingAs($this->user)->patchJson(route('settings.save'));
 
         $response->assertForbidden();
     }

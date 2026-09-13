@@ -32,16 +32,13 @@ class ProjectReportExport extends AppReport implements FromCollection, WithMappi
         private readonly Carbon $startAt,
         private readonly Carbon $endAt,
         private readonly string $companyTimezone,
-    )
-    {
+    ) {
         $this->period = CarbonPeriod::create($this->startAt, $this->endAt);
     }
 
     public function collection(): Collection
     {
-        $that = $this;
-
-        return $this->queryReport()->map(static function ($interval) use ($that) {
+        return $this->queryReport()->map(function ($interval) {
             $date = optional(Carbon::make($interval->start_at));
 
             $interval->hour = $date->hour;
@@ -49,10 +46,10 @@ class ProjectReportExport extends AppReport implements FromCollection, WithMappi
             $interval->minute = round($date->minute, -1);
             $interval->duration = Carbon::make($interval->end_at)?->diffInSeconds(Carbon::make($interval->start_at));
 
-            $interval->durationByDay = ReportHelper::getIntervalDurationByDay($interval, $that->companyTimezone);
+            $interval->durationByDay = ReportHelper::getIntervalDurationByDay($interval, $this->companyTimezone);
 
             $interval->durationAtSelectedPeriod = ReportHelper::getIntervalDurationInPeriod(
-                $that->period,
+                $this->period,
                 $interval->durationByDay
             );
 

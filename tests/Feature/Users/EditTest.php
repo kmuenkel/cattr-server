@@ -12,8 +12,6 @@ class EditTest extends TestCase
 {
     use WithFaker;
 
-    private const URI = '/users/edit';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -37,10 +35,14 @@ class EditTest extends TestCase
     {
         $this->user->full_name = $this->faker->name;
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->user->toArray());
+        $response = $this->actingAs($this->admin)->postJson(
+            route('users.edit'),
+            $this->user->toArray(),
+            ['X-Paginate' => 'false'],
+        );
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->user->toArray()]);
+        $response->assertJson(['data' => $this->user->toArray()]);
         $this->assertDatabaseHas('users', $this->user->only('id', 'full_name'));
     }
 
@@ -48,25 +50,25 @@ class EditTest extends TestCase
     {
         $this->user->full_name = $this->faker->name;
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->user->toArray());
+        $response = $this->actingAs($this->manager)->postJson(route('users.edit'), $this->user->toArray());
 
-        $response->assertForbidden();
+        $response->assertUnprocessable();
     }
 
     public function test_edit_as_auditor(): void
     {
         $this->user->full_name = $this->faker->name;
 
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->user->toArray());
+        $response = $this->actingAs($this->auditor)->postJson(route('users.edit'), $this->user->toArray());
 
-        $response->assertForbidden();
+        $response->assertUnprocessable();
     }
 
     public function test_edit_as_user(): void
     {
         $this->admin->full_name = $this->faker->name;
 
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->admin->toArray());
+        $response = $this->actingAs($this->user)->postJson(route('users.edit'), $this->admin->toArray());
 
         $response->assertForbidden();
     }
@@ -82,12 +84,13 @@ class EditTest extends TestCase
         $user->user_language = 'en';
 
         $response = $this->actingAs($this->user)->postJson(
-            self::URI,
-            $user->only('id', 'full_name', 'email', 'password', 'user_language')
+            route('users.edit'),
+            $user->only('id', 'full_name', 'email', 'password', 'user_language'),
+            ['X-Paginate' => 'false'],
         );
 
         $response->assertOk();
-        $response->assertJson(['res' => $user->toArray()]);
+        $response->assertJson(['data' => $user->toArray()]);
         $this->assertDatabaseHas(
             'users',
             $user->only('id', 'full_name', 'email', 'user_language')
@@ -100,7 +103,7 @@ class EditTest extends TestCase
         $user->is_admin = true;
 
         $response = $this->actingAs($this->user)->postJson(
-            self::URI,
+            route('users.edit'),
             $user->only('id', 'is_admin')
         );
 
@@ -112,23 +115,23 @@ class EditTest extends TestCase
         $this->user->id++;
         $this->user->email = 'newemail@example.com';
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->user->toArray());
+        $response = $this->actingAs($this->admin)->postJson(route('users.edit'), $this->user->toArray());
 
-        $response->assertNotFound();
+        $response->assertForbidden();
     }
 
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('users.edit'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('users.edit'));
 
-        $response->assertValidationError();
+        $response->assertForbidden();
     }
 }

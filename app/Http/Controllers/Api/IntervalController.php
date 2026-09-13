@@ -148,6 +148,8 @@ class IntervalController extends ItemController
         Filter::listen(Filter::getRequestFilterName(), static function ($requestData) {
             $requestData['start_at'] = Carbon::parse($requestData['start_at'])->setTimezone('UTC')->toDateTimeString();
             $requestData['end_at'] = Carbon::parse($requestData['end_at'])->setTimezone('UTC')->toDateTimeString();
+
+            return $requestData;
         });
 
         return $this->_edit($request);

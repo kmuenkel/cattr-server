@@ -13,8 +13,6 @@ use Tests\TestCase;
 
 class TaskTest extends TestCase
 {
-    private const URI = 'project-report/list/tasks';
-
     private User $admin;
 
     private Collection $intervals;
@@ -38,8 +36,9 @@ class TaskTest extends TestCase
         ]);
 
         $this->requestData = [
-            'start_at' => $this->intervals->min('start_at'),
-            'end_at' => $this->intervals->max('end_at')->addMinute(),
+            'projects' => [$this->task->project->id],
+            'start_at' => Carbon::parse($this->intervals->min('start_at')),
+            'end_at' => Carbon::parse($this->intervals->max('end_at'))->addMinute(),
             'uid' => $this->intervals->first()->user->id
         ];
 
@@ -50,22 +49,28 @@ class TaskTest extends TestCase
 
     public function test_list_task(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI . '/' . $this->task->id, $this->requestData);
+        $response = $this->actingAs($this->admin)->postJson(route('report.project'), $this->requestData);
+        $duration = collect($response->json()['data'])
+            ->pluck('users')->flatten(1)
+            ->pluck('tasks')->flatten(1)
+            ->pluck('intervals')->flatten(1)
+            ->pluck('items')->flatten(1)
+            ->map(fn (array $item) => collect($item)->sum('duration'))->sum();
 
         $response->assertOk();
-        $response->assertJsonFragment(['duration' => (string)$this->duration]);
+        $this->assertEquals($this->duration, $duration);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI . '/' . $this->task->id);
+        $response = $this->postJson(route('report.project'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI . '/' . $this->task->id);
+        $response = $this->actingAs($this->admin)->postJson(route('report.project'));
 
         $response->assertValidationError();
     }

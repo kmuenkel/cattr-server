@@ -8,8 +8,6 @@ use Tests\TestCase;
 
 class RemoveTest extends TestCase
 {
-    private const URI = 'users/remove';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -33,51 +31,60 @@ class RemoveTest extends TestCase
     {
         $user = $this->user->makeHidden('online')->toArray();
         unset($user['online']);
+        unset($user['can_view_team_tab']);
+        unset($user['can_create_task']);
+
         $this->assertDatabaseHas('users', $user);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->admin)->postJson(route('users.destroy'), $this->user->only('id'));
 
-        $response->assertOk();
+        $response->assertNoContent();
         $this->assertSoftDeleted('users', $this->user->only('id'));
     }
 
     public function test_remove_as_manager(): void
     {
-        $this->assertDatabaseHas('users', $this->user->makeHidden('online')->toArray());
+        $user = $this->user->toArray();
+        unset($user['can_view_team_tab'], $user['can_create_task'], $user['online']);
+        $this->assertDatabaseHas('users', $user);
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->manager)->postJson(route('users.destroy'), $this->user->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_remove_as_auditor(): void
     {
-        $this->assertDatabaseHas('users', $this->user->makeHidden('online')->toArray());
+        $user = $this->user->toArray();
+        unset($user['can_view_team_tab'], $user['can_create_task'], $user['online']);
+        $this->assertDatabaseHas('users', $user);
 
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->auditor)->postJson(route('users.destroy'), $this->user->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_remove_as_user(): void
     {
-        $this->assertDatabaseHas('users', $this->user->makeHidden('online')->toArray());
+        $user = $this->user->toArray();
+        unset($user['can_view_team_tab'], $user['can_create_task'], $user['online']);
+        $this->assertDatabaseHas('users', $user);
 
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->user->only('id'));
+        $response = $this->actingAs($this->user)->postJson(route('users.destroy'), $this->user->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('users.destroy'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('users.destroy'));
 
         $response->assertValidationError();
     }

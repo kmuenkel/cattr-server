@@ -14,8 +14,6 @@ use Tests\TestResponse;
 
 class ListTest extends TestCase
 {
-    private const URI = 'project-report/list';
-
     private const INTERVALS_AMOUNT = 10;
 
     private User $admin;
@@ -28,14 +26,9 @@ class ListTest extends TestCase
     private int $duration = 0;
     private array $requestData;
 
-    private function collectResponseProjects(TestResponse $response): Collection
-    {
-        return collect($response->json('projects'));
-    }
-
     private function collectResponseUsers(TestResponse $response): Collection
     {
-        return $this->collectResponseProjects($response)->pluck('users')->collapse();
+        return collect($response->json()['data'])->pluck('users')->flatten(1);
     }
 
     protected function setUp(): void
@@ -53,10 +46,9 @@ class ListTest extends TestCase
             $this->duration += Carbon::parse($interval->end_at)->diffInSeconds($interval->start_at);
         });
 
-
         $this->requestData = [
             'start_at' => $this->intervals->min('start_at'),
-            'end_at' => $this->intervals->max('end_at')->addMinute(),
+            'end_at' => Carbon::parse($this->intervals->max('end_at'))->addMinute()->format('c'),
             'uids' => $this->uids,
             'pids' => $this->pids
         ];
@@ -64,13 +56,19 @@ class ListTest extends TestCase
 
     public function test_list(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->requestData);
+        $response = $this->actingAs($this->admin)->postJson(route('report.project'), $this->requestData);
 
         $response->assertOk();
 
         $users = $this->collectResponseUsers($response);
 
-        $this->assertEquals($this->duration, $users->sum('tasks_time'));
+//        $this->assertEquals($this->duration, $users->sum('tasks_time'));
+        $this->assertEquals($this->duration, collect($response->json()['data'])
+            ->pluck('users')->flatten(1)
+            ->pluck('tasks')->flatten(1)
+            ->pluck('intervals')->flatten(1)
+            ->pluck('items')->flatten(1)
+            ->map(fn (array $item) => collect($item)->sum('duration'))->sum());
         $this->assertEquals(count($this->uids), $users->count());
 
         //TODO change later
@@ -78,14 +76,14 @@ class ListTest extends TestCase
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->postJson(route('report.project'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('report.project'));
 
         $response->assertValidationError();
     }

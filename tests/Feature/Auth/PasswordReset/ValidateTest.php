@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class ValidateTest extends TestCase
 {
-    private const URI = 'auth/password/reset/validate';
-
     private User $user;
 
     protected function setUp(): void
@@ -36,7 +34,7 @@ class ValidateTest extends TestCase
     {
         $reset = $this->createReset($this->user->email, 'token', now());
 
-        $response = $this->postJson(self::URI, $reset);
+        $response = $this->postJson(route('auth.reset.validate'), $reset);
 
         $response->assertOk();
     }
@@ -46,7 +44,7 @@ class ValidateTest extends TestCase
         $reset = $this->createReset($this->user->email, 'token', now());
         $reset['token'] = 'invalid_token';
 
-        $response = $this->postJson(self::URI, $reset);
+        $response = $this->postJson(route('auth.reset.validate'), $reset);
 
         $response->assertUnauthorized('authorization.invalid_password_data');
     }
@@ -56,7 +54,7 @@ class ValidateTest extends TestCase
         $reset = $this->createReset($this->user->email, 'token', now());
         $reset['email'] = 'invalidemail@example.com';
 
-        $response = $this->postJson(self::URI, $reset);
+        $response = $this->postJson(route('auth.reset.validate'), $reset);
 
         $response->assertUnauthorized('authorization.invalid_password_data');
     }
@@ -66,7 +64,7 @@ class ValidateTest extends TestCase
         $reset = [$this->user->email, 'expired', now()->subMinutes(config('auth.passwords.users.expire') - 1)];
         $reset = $this->createReset(...$reset);
 
-        $response = $this->postJson(self::URI, $reset);
+        $response = $this->postJson(route('auth.reset.validate'), $reset);
 
         $response->assertOk();
     }
@@ -76,14 +74,14 @@ class ValidateTest extends TestCase
         $reset = [$this->user->email, 'expired', now()->subMinutes(config('auth.passwords.users.expire'))];
         $reset = $this->createReset(...$reset);
 
-        $response = $this->postJson(self::URI, $reset);
+        $response = $this->postJson(route('auth.reset.validate'), $reset);
 
         $response->assertUnauthorized('authorization.invalid_password_data');
     }
 
     public function test_without_params(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('auth.reset.validate'));
         $response->assertError(self::HTTP_BAD_REQUEST);
     }
 }

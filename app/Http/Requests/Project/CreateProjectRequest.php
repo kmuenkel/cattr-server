@@ -19,7 +19,9 @@ class CreateProjectRequest extends CattrFormRequest
     {
         return [
             'name' => 'required|string',
+            'company_id' => 'sometimes|integer',
             'description' => 'required|string',
+            'source' => 'sometimes|string',
             'important' => 'sometimes|required|bool',
             'default_priority_id' => 'sometimes|integer|exists:priorities,id',
             'screenshots_state' => ['required', new Enum(ScreenshotsState::class)],

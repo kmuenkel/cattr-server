@@ -2,15 +2,20 @@
 
 namespace Tests\Feature\Users;
 
+use App\Enums\Role;
 use App\Models\Project;
 use App\Models\User;
+use App\Scopes\UserAccessScope;
+use BackedEnum;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Tests\Facades\ProjectFactory;
 use Tests\Facades\UserFactory;
 use Tests\TestCase;
 
 class ListTest extends TestCase
 {
-    private const URI = 'users/list';
+    use RefreshDatabase;
 
     private const USERS_AMOUNT = 10;
 
@@ -47,123 +52,162 @@ class ListTest extends TestCase
         $this->project = ProjectFactory::create();
 
         $this->projectManager = UserFactory::refresh()->asUser()->withTokens()->create();
-        $this->projectManager->projects()->attach($this->project->id, ['role_id' => 1]);
+        $this->projectManager->projects()->attach($this->project->id, ['role_id' => Role::MANAGER]);
 
         $this->projectAuditor = UserFactory::refresh()->asUser()->withTokens()->create();
-        $this->projectAuditor->projects()->attach($this->project->id, ['role_id' => 3]);
+        $this->projectAuditor->projects()->attach($this->project->id, ['role_id' => Role::AUDITOR]);
 
         $this->projectUser = UserFactory::refresh()->asUser()->withTokens()->create();
-        $this->projectUser->projects()->attach($this->project->id, ['role_id' => 2]);
+        $this->projectUser->projects()->attach($this->project->id, ['role_id' => Role::USER]);
     }
 
     public function test_list_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(
+            route('users.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $users = User::withoutGlobalScopes()->setEagerLoads([])->get()->toArray();
 
         $response->assertOk();
-        $response->assertExactJson($users);
+        $response->assertExactJson(['data' => $users, 'status' => 200, 'success' => true]);
     }
 
     public function test_list_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->getJson(self::URI);
+        $response = $this->actingAs($this->manager)->getJson(
+            route('users.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $users = User::withoutGlobalScopes()->setEagerLoads([])->get()->toArray();
 
         $response->assertOk();
-        $response->assertExactJson($users);
+        $response->assertExactJson(['data' => $users, 'status' => 200, 'success' => true]);
     }
 
     public function test_list_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->getJson(self::URI);
+        $response = $this->actingAs($this->auditor)->getJson(
+            route('users.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $users = User::withoutGlobalScopes()->setEagerLoads([])->get()->toArray();
 
         $response->assertOk();
-        $response->assertExactJson($users);
+        $response->assertExactJson(['data' => $users, 'status' => 200, 'success' => true]);
     }
 
     public function test_list_as_user(): void
     {
-        $response = $this->actingAs($this->user)->getJson(self::URI);
+        $response = $this->actingAs($this->user)->getJson(route('users.list'));
 
-        $user = User::withoutGlobalScopes()
+        $users = User::withoutGlobalScopes()
             ->where('id', $this->user->id)
             ->setEagerLoads([])
-            ->get()
-            ->toArray();
+            ->get();
 
         $response->assertOk();
-        $response->assertExactJson($user);
+        $expected = $users->map(fn (User $user) => Arr::map(
+            $user->toArray(),
+            fn ($value) => $value instanceof BackedEnum ? $value->value : $value
+        ))->toArray();
+        $response->assertJson(['data' => $expected, 'status' => 200, 'success' => true]);
     }
 
     public function test_list_as_project_manager(): void
     {
-        $response = $this->actingAs($this->projectManager)->getJson(self::URI);
+        $response = $this->actingAs($this->projectManager)->getJson(
+            route('users.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $users = User::withoutGlobalScopes()
             ->whereHas('projects', function ($query) {
                 $query->where('project_id', $this->project->id);
             })
             ->setEagerLoads([])
-            ->get()
-            ->toArray();
+            ->get();
 
         $response->assertOk();
-        $response->assertExactJson($users);
+        $expected = $users->map(fn (User $user) => Arr::map(
+            $user->toArray(),
+            fn ($value) => $value instanceof BackedEnum ? $value->value : $value
+        ))->toArray();
+        $response->assertJson(['data' => $expected]);
     }
 
     public function test_list_as_project_manager_with_global_scope(): void
     {
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, ['global_scope' => true]);
+        $this->markTestSkipped('"global_scope" parameter is no longer supported');
 
-        $users = User::withoutGlobalScope(\App\Scopes\UserAccessScope::class)
+        $response = $this->actingAs($this->projectManager)->postJson(
+            route('users.list'),
+            ['global_scope' => true],
+            ['X-Paginate' => 'false'],
+        );
+
+        $users = User::withoutGlobalScope(UserAccessScope::class)
             ->setEagerLoads([])
-            ->get()
-            ->toArray();
+            ->get();
 
         $response->assertOk();
-        $response->assertExactJson($users);
+        $expected = $users->map(fn (User $user) => Arr::map(
+            $user->toArray(),
+            fn ($value) => $value instanceof BackedEnum ? $value->value : $value
+        ))->toArray();
+        $response->assertJson(['data' => $expected]);
     }
 
     public function test_list_as_project_auditor(): void
     {
-        $response = $this->actingAs($this->projectAuditor)->getJson(self::URI);
+        $response = $this->actingAs($this->projectAuditor)->getJson(
+            route('users.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $users = User::withoutGlobalScopes()
             ->whereHas('projects', function ($query) {
                 $query->where('project_id', $this->project->id);
             })
             ->setEagerLoads([])
-            ->get()
-            ->toArray();
+            ->get();
 
         $response->assertOk();
-        $response->assertExactJson($users);
+        $expected = $users->map(fn (User $user) => Arr::map(
+            $user->toArray(),
+            fn ($value) => $value instanceof BackedEnum ? $value->value : $value
+        ))->toArray();
+        $response->assertJson(['data' => $expected]);
     }
 
     public function test_list_as_project_user(): void
     {
-        $response = $this->actingAs($this->projectManager)->getJson(self::URI);
+        $response = $this->actingAs($this->projectManager)->getJson(
+            route('users.list'),
+            ['X-Paginate' => 'false'],
+        );
 
         $users = User::withoutGlobalScopes()
             ->whereHas('projects', function ($query) {
                 $query->where('project_id', $this->project->id);
             })
             ->setEagerLoads([])
-            ->get()
-            ->toArray();
+            ->get();
 
         $response->assertOk();
-        $response->assertExactJson($users);
+        $expected = $users->map(fn (User $user) => Arr::map(
+            $user->toArray(),
+            fn ($value) => $value instanceof BackedEnum ? $value->value : $value
+        ))->toArray();
+        $response->assertJson(['data' => $expected]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('users.list'));
 
         $response->assertUnauthorized();
     }

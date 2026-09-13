@@ -59,7 +59,7 @@ class SettingsProviderService implements SettingsProvider
     /**
      * @inerhitDoc
      */
-    final public function get(string $key = null, mixed $default = null): mixed
+    final public function get(string $key, mixed $default = null): mixed
     {
         $scope = $this->scope;
 

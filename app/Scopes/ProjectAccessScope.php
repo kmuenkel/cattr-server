@@ -19,11 +19,9 @@ class ProjectAccessScope implements Scope
      */
     public function apply(Builder $builder, Model $model): Builder
     {
-        if (app()->runningInConsole()) {
+        if (!($user = auth()->user() ?? request()->user()) && app()->runningInConsole()) {
             return $builder;
         }
-
-        $user = optional(request())->user();
 
         throw_unless($user, new AuthorizationException);
 

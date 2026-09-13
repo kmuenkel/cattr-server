@@ -25,15 +25,15 @@ class CountTest extends TestCase
 
     public function test_count(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('users.count'));
 
         $response->assertOk();
-        $response->assertJson(['total' => User::count()]);
+        $response->assertJson(['data' => ['total' => User::count()]]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('users.count'));
 
         $response->assertUnauthorized();
     }

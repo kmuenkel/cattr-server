@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class RequestTest extends TestCase
 {
-    private const URI = 'auth/password/reset/request';
-
     private User $user;
 
     protected function setUp(): void
@@ -26,7 +24,7 @@ class RequestTest extends TestCase
         Notification::fake();
         Notification::assertNothingSent();
 
-        $response = $this->postJson(self::URI, ['email' => $this->user->email]);
+        $response = $this->postJson(route('auth.reset.request'), ['email' => $this->user->email]);
 
         $response->assertOk();
         Notification::assertSentTo($this->user, ResetPassword::class);
@@ -37,7 +35,7 @@ class RequestTest extends TestCase
         Notification::fake();
         Notification::assertNothingSent();
 
-        $response = $this->postJson(self::URI, ['email' => 'wronemail@example.com']);
+        $response = $this->postJson(route('auth.reset.request'), ['email' => 'wronemail@example.com']);
 
         $response->assertNotFound('authorization.user_not_found');
         Notification::assertNothingSent();
@@ -48,7 +46,7 @@ class RequestTest extends TestCase
         Notification::fake();
         Notification::assertNothingSent();
 
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('auth.reset.request'));
 
         $response->assertError(self::HTTP_BAD_REQUEST);
         Notification::assertNothingSent();

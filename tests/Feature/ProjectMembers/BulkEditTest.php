@@ -4,7 +4,9 @@ namespace Tests\Feature\ProjectMembers;
 
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Event;
 use Tests\Facades\UserFactory;
 use Tests\Facades\ProjectFactory;
 use Tests\TestCase;
@@ -12,8 +14,6 @@ use Tests\TestCase;
 class BulkEditTest extends TestCase
 {
     use WithFaker;
-
-    private const URI = 'project-members/bulk-edit';
 
     /** @var User $admin */
     private User $admin;
@@ -39,12 +39,22 @@ class BulkEditTest extends TestCase
     {
         parent::setUp();
 
+        Event::fake();
+
         $this->admin = UserFactory::refresh()->asAdmin()->withTokens()->create();
+        $this->admin->update(['email' => 'admin_' . $this->admin->email]);
+
         $this->manager = UserFactory::refresh()->asManager()->withTokens()->create();
+        $this->manager->update(['email' => 'manager_' . $this->manager->email]);
+
         $this->auditor = UserFactory::refresh()->asAuditor()->withTokens()->create();
+        $this->auditor->update(['email' => 'auditor_' . $this->auditor->email]);
+
         $this->user = UserFactory::refresh()->asUser()->withTokens()->create();
+        $this->user->update(['email' => 'user_' . $this->user->email]);
 
         $this->project = ProjectFactory::create();
+        $this->project->update(['created_by' => $this->manager->getKey()]);
 
         $this->projectManager = UserFactory::refresh()->asUser()->withTokens()->create();
         $this->projectManager->projects()->attach($this->project->id, ['role_id' => 1]);
@@ -58,49 +68,49 @@ class BulkEditTest extends TestCase
 
     public function test_bulk_edit_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->admin)->postJson(route('projects_members.edit'), $this->generateRequest());
 
-        $response->assertOk();
+        $response->assertNoContent();
     }
 
     public function test_bulk_edit_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->manager)->postJson(route('projects_members.edit'), $this->generateRequest());
 
-        $response->assertOk();
+        $response->assertNoContent();
     }
 
     public function test_bulk_edit_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->auditor)->postJson(route('projects_members.edit'), $this->generateRequest());
 
         $response->assertForbidden();
     }
 
     public function test_bulk_edit_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->user)->postJson(route('projects_members.edit'), $this->generateRequest());
 
         $response->assertForbidden();
     }
 
     public function test_bulk_edit_as_project_manager(): void
     {
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->projectManager)->postJson(route('projects_members.edit'), $this->generateRequest());
 
-        $response->assertOk();
+        $response->assertNoContent();
     }
 
     public function test_bulk_edit_as_project_auditor(): void
     {
-        $response = $this->actingAs($this->projectAuditor)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->projectAuditor)->postJson(route('projects_members.edit'), $this->generateRequest());
 
         $response->assertForbidden();
     }
 
     public function test_bulk_edit_as_project_user(): void
     {
-        $response = $this->actingAs($this->projectUser)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->projectUser)->postJson(route('projects_members.edit'), $this->generateRequest());
 
         $response->assertForbidden();
     }
@@ -109,21 +119,21 @@ class BulkEditTest extends TestCase
     {
         $this->project->id = $this->faker->randomNumber();
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->generateRequest());
+        $response = $this->actingAs($this->admin)->postJson(route('projects_members.edit'), $this->generateRequest());
 
         $response->assertValidationError();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('projects_members.edit'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('projects_members.edit'));
 
         $response->assertValidationError();
     }

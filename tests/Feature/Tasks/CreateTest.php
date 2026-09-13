@@ -3,6 +3,7 @@
 namespace Tests\Feature\Tasks;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 use Tests\Facades\ProjectFactory;
 use Tests\Facades\TaskFactory;
 use Tests\Facades\UserFactory;
@@ -39,13 +40,17 @@ class CreateTest extends TestCase
     {
         parent::setUp();
 
+        Event::fake();
+
         $this->admin = UserFactory::refresh()->asAdmin()->withTokens()->create();
         $this->manager = UserFactory::refresh()->asManager()->withTokens()->create();
         $this->auditor = UserFactory::refresh()->asAuditor()->withTokens()->create();
         $this->user = UserFactory::refresh()->asUser()->withTokens()->create();
 
+        $project = ProjectFactory::create();
         $this->taskData = array_merge(TaskFactory::createRandomModelData(), [
-            'project_id' => ProjectFactory::create()->id,
+            'project_id' => $project->id,
+            'priority_id' => $project->default_priority_id
         ]);
 
         $this->taskRequest = array_merge($this->taskData, [
@@ -76,10 +81,10 @@ class CreateTest extends TestCase
 
         $this->assertDatabaseMissing('tasks', $this->taskData);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.create'), $this->taskRequest);
 
         $response->assertSuccess();
-        $response->assertJson(['res' => $this->taskData]);
+        $response->assertJson(['data' => $this->taskData]);
         $this->assertDatabaseHas('tasks', $this->taskData);
     }
 
@@ -87,15 +92,15 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('tasks', $this->taskData);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.create'), $this->taskRequest);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->taskData]);
+        $response->assertJson(['data' => $this->taskData]);
         $this->assertDatabaseHas('tasks', $this->taskData);
 
         foreach ($this->taskRequest['users'] as $user) {
             $this->assertDatabaseHas('tasks_users', [
-                'task_id' => $response->json()['res']['id'],
+                'task_id' => $response->json()['data']['id'],
                 'user_id' => $user,
             ]);
         }
@@ -105,15 +110,15 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('tasks', $this->taskData);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->taskRequestWithMultipleUsers);
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.create'), $this->taskRequestWithMultipleUsers);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->taskData]);
+        $response->assertJson(['data' => $this->taskData]);
         $this->assertDatabaseHas('tasks', $this->taskData);
 
         foreach ($this->taskRequestWithMultipleUsers['users'] as $user) {
             $this->assertDatabaseHas('tasks_users', [
-                'task_id' => $response->json()['res']['id'],
+                'task_id' => $response->json()['data']['id'],
                 'user_id' => $user,
             ]);
         }
@@ -123,15 +128,15 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('tasks', $this->taskData);
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->manager)->postJson(route('tasks.create'), $this->taskRequest);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->taskData]);
+        $response->assertJson(['data' => $this->taskData]);
         $this->assertDatabaseHas('tasks', $this->taskData);
 
         foreach ($this->taskRequest['users'] as $user) {
             $this->assertDatabaseHas('tasks_users', [
-                'task_id' => $response->json()['res']['id'],
+                'task_id' => $response->json()['data']['id'],
                 'user_id' => $user,
             ]);
         }
@@ -141,15 +146,15 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('tasks', $this->taskData);
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->taskRequestWithMultipleUsers);
+        $response = $this->actingAs($this->manager)->postJson(route('tasks.create'), $this->taskRequestWithMultipleUsers);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->taskData]);
+        $response->assertJson(['data' => $this->taskData]);
         $this->assertDatabaseHas('tasks', $this->taskData);
 
         foreach ($this->taskRequestWithMultipleUsers['users'] as $user) {
             $this->assertDatabaseHas('tasks_users', [
-                'task_id' => $response->json()['res']['id'],
+                'task_id' => $response->json()['data']['id'],
                 'user_id' => $user,
             ]);
         }
@@ -157,14 +162,14 @@ class CreateTest extends TestCase
 
     public function test_create_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->auditor)->postJson(route('tasks.create'), $this->taskRequest);
 
         $response->assertForbidden();
     }
 
     public function test_create_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->user)->postJson(route('tasks.create'), $this->taskRequest);
 
         $response->assertForbidden();
     }
@@ -173,15 +178,15 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('tasks', $this->taskData);
 
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->projectManager)->postJson(route('tasks.create'), $this->taskRequest);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->taskData]);
+        $response->assertJson(['data' => $this->taskData]);
         $this->assertDatabaseHas('tasks', $this->taskData);
 
         foreach ($this->taskRequest['users'] as $user) {
             $this->assertDatabaseHas('tasks_users', [
-                'task_id' => $response->json()['res']['id'],
+                'task_id' => $response->json()['data']['id'],
                 'user_id' => $user,
             ]);
         }
@@ -191,15 +196,15 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('tasks', $this->taskData);
 
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, $this->taskRequestWithMultipleUsers);
+        $response = $this->actingAs($this->projectManager)->postJson(route('tasks.create'), $this->taskRequestWithMultipleUsers);
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->taskData]);
+        $response->assertJson(['data' => $this->taskData]);
         $this->assertDatabaseHas('tasks', $this->taskData);
 
         foreach ($this->taskRequestWithMultipleUsers['users'] as $user) {
             $this->assertDatabaseHas('tasks_users', [
-                'task_id' => $response->json()['res']['id'],
+                'task_id' => $response->json()['data']['id'],
                 'user_id' => $user,
             ]);
         }
@@ -207,28 +212,30 @@ class CreateTest extends TestCase
 
     public function test_create_as_project_auditor(): void
     {
-        $response = $this->actingAs($this->projectAuditor)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->projectAuditor)->postJson(route('tasks.create'), $this->taskRequest);
 
         $response->assertForbidden();
     }
 
     public function test_create_as_project_user(): void
     {
-        $response = $this->actingAs($this->projectUser)->postJson(self::URI, $this->taskRequest);
+        $response = $this->actingAs($this->projectUser)->postJson(route('tasks.create'), $this->taskRequest);
 
-        $response->assertForbidden();
+        $response->assertOk();
+        unset($this->taskRequest['users']);
+        $this->assertEmpty(array_diff_assoc($this->taskRequest, $response->json('data')));
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('tasks.create'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.create'));
 
         $response->assertValidationError();
     }

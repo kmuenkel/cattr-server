@@ -8,13 +8,15 @@ use Tests\TestCase;
 
 class CountTest extends TestCase
 {
-    private const URI = 'roles/count';
+    private const URI = 'api/roles/count';
 
     private User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->markTestSkipped('"api/roles/count" route has been removed');
 
         $this->admin = UserFactory::withTokens()->asAdmin()->create();
     }

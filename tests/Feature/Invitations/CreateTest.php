@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    private const URI = 'invitations/create';
-
     private User $admin;
     private User $manager;
     private User $auditor;
@@ -35,59 +33,59 @@ class CreateTest extends TestCase
 
     public function test_create_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->invitationRequestData);
+        $response = $this->actingAs($this->admin)->postJson(route('invitations.create'), $this->invitationRequestData);
 
         $response->assertOk();
 
         $this->assertDatabaseHas((new Invitation)->getTable(), $this->invitationRequestData['users'][0]);
 
-        foreach ($response->json('res') as $invitation) {
+        foreach ($response->json('data') as $invitation) {
             $this->assertDatabaseHas((new Invitation)->getTable(), $invitation);
         }
     }
 
     public function test_create_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->invitationRequestData);
+        $response = $this->actingAs($this->manager)->postJson(route('invitations.create'), $this->invitationRequestData);
 
         $response->assertForbidden();
     }
 
     public function test_create_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->invitationRequestData);
+        $response = $this->actingAs($this->auditor)->postJson(route('invitations.create'), $this->invitationRequestData);
 
         $response->assertForbidden();
     }
 
     public function test_create_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->invitationRequestData);
+        $response = $this->actingAs($this->user)->postJson(route('invitations.create'), $this->invitationRequestData);
 
         $response->assertForbidden();
     }
 
     public function test_create_already_exists(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->invitationRequestData);
+        $response = $this->actingAs($this->admin)->postJson(route('invitations.create'), $this->invitationRequestData);
 
-        $this->assertDatabaseHas((new Invitation)->getTable(), $response->decodeResponseJson()['res'][0]);
+        $this->assertDatabaseHas((new Invitation)->getTable(), $response->decodeResponseJson()['data'][0]);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->invitationRequestData);
+        $response = $this->actingAs($this->admin)->postJson(route('invitations.create'), $this->invitationRequestData);
 
         $response->assertValidationError();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('invitations.create'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('invitations.create'));
 
         $response->assertValidationError();
     }

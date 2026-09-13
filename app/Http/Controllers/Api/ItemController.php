@@ -468,7 +468,7 @@ abstract class ItemController extends Controller
 
         CatEvent::dispatch(Filter::getAfterActionEventName(), [$items, $requestData]);
 
-        return responder()->success($items)->respond();
+        return responder()->success($items->values())->respond();
     }
 
     /**
@@ -543,7 +543,7 @@ abstract class ItemController extends Controller
         if (!$item) {
             /** @var Model $cls */
             $cls = static::MODEL;
-            throw_if($cls::find($request->get('id'))?->count(), new AccessDeniedHttpException);
+            throw_if($cls::find($request->get('id'))?->count(), new AccessDeniedHttpException('Access Denied'));
 
             throw new NotFoundHttpException;
         }

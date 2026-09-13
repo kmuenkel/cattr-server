@@ -3,6 +3,7 @@
 namespace Tests\Feature\Time;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Tests\Facades\IntervalFactory;
 use Tests\Facades\UserFactory;
@@ -30,11 +31,11 @@ class TasksTest extends TestCase
     {
         $requestData = [
             'start_at' => $this->intervals->min('start_at'),
-            'end_at' => $this->intervals->max('end_at')->addMinute(),
+            'end_at' => Carbon::parse($this->intervals->max('end_at'))->addMinute()->format('c'),
             'user_id' => $this->admin->id
         ];
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $requestData);
+        $response = $this->actingAs($this->admin)->postJson(route('time.tasks'), $requestData);
         $response->assertOk();
 
         //TODO CHECK RESPONSE CONTENT
@@ -42,14 +43,14 @@ class TasksTest extends TestCase
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('time.tasks'));
 
         $response->assertUnauthorized();
     }
 
     public function test_wrong_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, ['task_id' => 'wrong']);
+        $response = $this->actingAs($this->admin)->postJson(route('time.tasks'), ['task_id' => 'wrong']);
 
         $response->assertValidationError();
     }

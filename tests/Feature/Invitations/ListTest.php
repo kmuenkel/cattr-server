@@ -9,8 +9,6 @@ use Tests\TestCase;
 
 class ListTest extends TestCase
 {
-    private const URI = 'invitations/list';
-
     private User $admin;
     private User $manager;
     private User $auditor;
@@ -28,7 +26,7 @@ class ListTest extends TestCase
 
     public function test_list_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('invitations.list'));
 
         $invitations = invitation::all()->toArray();
 
@@ -37,21 +35,21 @@ class ListTest extends TestCase
 
     public function test_list_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->getJson(self::URI);
+        $response = $this->actingAs($this->manager)->getJson(route('invitations.list'));
 
         $response->assertForbidden();
     }
 
     public function test_list_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->getJson(self::URI);
+        $response = $this->actingAs($this->auditor)->getJson(route('invitations.list'));
 
         $response->assertForbidden();
     }
 
     public function test_list_as_user(): void
     {
-        $response = $this->actingAs($this->user)->getJson(self::URI);
+        $response = $this->actingAs($this->user)->getJson(route('invitations.list'));
 
         $response->assertForbidden();
     }

@@ -2,8 +2,8 @@
 
 namespace Tests\Factories;
 
-use App\Models\Screenshot;
 use App\Models\TimeInterval;
+use App\Models\User;
 use Faker\Factory as FakerFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -13,7 +13,6 @@ use Tests\Facades\IntervalFactory;
 class ScreenshotFactory extends Factory
 {
     private ?TimeInterval $interval = null;
-    private Screenshot $screenshot;
 
     private bool $fakeStorage = false;
 
@@ -25,7 +24,7 @@ class ScreenshotFactory extends Factory
 
     protected function getModelInstance(): Model
     {
-        return $this->screenshot;
+        return $this->interval;
     }
 
     public function createRandomModelData(): array
@@ -44,23 +43,24 @@ class ScreenshotFactory extends Factory
         return compact('path', 'thumbnail');
     }
 
-    public function create(array $attributes = []): Screenshot
+    public function create(array $attributes = []): TimeInterval
     {
         if ($this->fakeStorage) {
             Storage::fake();
         }
 
         $modelData = $this->createRandomModelData();
-        $this->screenshot = Screenshot::make($modelData);
+        $this->interval = TimeInterval::make($modelData);
+        $this->interval->user_id = $this->interval->user_id ?? User::inRandomOrder()->first()->id;
 
         $this->defineInterval();
-        $this->screenshot->save();
+        $this->interval::withoutEvents(fn () => $this->interval->save());
 
         if ($this->timestampsHidden) {
             $this->hideTimestamps();
         }
 
-        return $this->screenshot;
+        return $this->interval;
     }
 
     public function withRandomRelations(): self
@@ -80,7 +80,5 @@ class ScreenshotFactory extends Factory
         if ($this->randomRelations || !$this->interval) {
             $this->interval = IntervalFactory::create();
         }
-
-        $this->screenshot->time_interval_id = $this->interval->id;
     }
 }

@@ -37,14 +37,17 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('users', $this->userData);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->userData);
+        $response = $this->actingAs($this->admin)->postJson(route('users.create'), $this->userData);
         unset($this->userData['password']);
 
         $response->assertOk();
         $this->assertDatabaseHas('users', $this->userData);
 
-        $responseData = $response->json('res');
+        $responseData = $response->json('data');
         unset($responseData['online']);
+        unset($responseData['can_view_team_tab']);
+        unset($responseData['can_create_task']);
+
         $this->assertDatabaseHas('users', $responseData);
     }
 
@@ -52,7 +55,7 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('users', $this->userData);
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->userData);
+        $response = $this->actingAs($this->manager)->postJson(route('users.create'), $this->userData);
 
         $response->assertForbidden();
     }
@@ -61,7 +64,7 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('users', $this->userData);
 
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->userData);
+        $response = $this->actingAs($this->auditor)->postJson(route('users.create'), $this->userData);
 
         $response->assertForbidden();
     }
@@ -70,21 +73,21 @@ class CreateTest extends TestCase
     {
         $this->assertDatabaseMissing('users', $this->userData);
 
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->userData);
+        $response = $this->actingAs($this->user)->postJson(route('users.create'), $this->userData);
 
         $response->assertForbidden();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('users.create'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('users.create'));
 
         $response->assertValidationError();
     }

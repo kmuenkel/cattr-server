@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class ListTest extends TestCase
 {
-    private const URI = 'time-intervals/list';
-
     private const INTERVALS_AMOUNT = 10;
 
     private User $admin;
@@ -27,15 +25,15 @@ class ListTest extends TestCase
 
     public function test_list(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('intervals.list'));
 
         $response->assertOk();
-        $response->assertJson(TimeInterval::all()->toArray());
+        $response->assertJson(['data' => TimeInterval::all()->toArray()]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('intervals.list'));
 
         $response->assertUnauthorized();
     }

@@ -8,7 +8,6 @@ use Tests\TestCase;
 
 class MeTest extends TestCase
 {
-    private const URI = 'auth/me';
 
     private User $user;
 
@@ -21,15 +20,15 @@ class MeTest extends TestCase
 
     public function test_me(): void
     {
-        $response = $this->actingAs($this->user)->getJson(self::URI);
+        $response = $this->actingAs($this->user)->getJson(route('auth.me'));
 
         $response->assertOk();
-        $response->assertJson(['user' => $this->user->toArray()]);
+        $response->assertJson(['data' => ['id' => $this->user->getKey()]]);
     }
 
     public function test_without_auth(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('auth.me'));
 
         $response->assertUnauthorized();
     }

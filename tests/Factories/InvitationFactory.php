@@ -36,7 +36,7 @@ class InvitationFactory extends Factory
         return [
             'email' => $faker->unique()->email,
             'key' => $faker->uuid,
-            'expires_at' => now()->addDays(1),
+            'expires_at' => now()->addDays(1)->format('Y-m-d H:i:s'),
         ];
     }
 

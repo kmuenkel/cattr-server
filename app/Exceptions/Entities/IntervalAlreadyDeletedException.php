@@ -3,9 +3,10 @@
 namespace App\Exceptions\Entities;
 
 use Flugg\Responder\Exceptions\Http\HttpException;
+use Symfony\Component\HttpFoundation\Response;
 
-class IntervalAlreadyDeletedException  extends HttpException
+class IntervalAlreadyDeletedException extends HttpException
 {
     protected $errorCode = 'interval_already_deleted';
-    protected $status = 409;
+    protected $status = Response::HTTP_CONFLICT;
 }

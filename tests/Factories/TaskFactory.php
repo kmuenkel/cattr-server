@@ -94,6 +94,7 @@ class TaskFactory extends Factory
         }
 
         $this->task->project_id = $this->project->id;
+        $this->task->priority_id = $this->project->default_priority_id;
     }
 
     private function defineUser(): void

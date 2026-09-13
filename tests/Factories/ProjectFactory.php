@@ -2,6 +2,8 @@
 
 namespace Tests\Factories;
 
+use App\Enums\ScreenshotsState;
+use App\Models\Priority;
 use App\Models\Project;
 use Faker\Factory as FakerFactory;
 use Tests\Facades\TaskFactory;
@@ -68,6 +70,8 @@ class ProjectFactory extends Factory
             'name' => $faker->company,
             'description' => $faker->text(self::DESCRIPTION_LENGTH),
             'source' => 'internal',
+            'default_priority_id' => (Priority::first() ?? Priority::create(['name' => 'default']))->getKey(),
+            'screenshots_state' => (string) ScreenshotsState::REQUIRED->value,
         ];
     }
 

@@ -4,14 +4,13 @@ namespace Tests\Feature\Tasks;
 
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 use Tests\Facades\TaskFactory;
 use Tests\Facades\UserFactory;
 use Tests\TestCase;
 
 class RemoveTest extends TestCase
 {
-    private const URI = 'tasks/remove';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -35,6 +34,8 @@ class RemoveTest extends TestCase
     {
         parent::setUp();
 
+        Event::fake();
+
         $this->admin = UserFactory::refresh()->asAdmin()->withTokens()->create();
         $this->manager = UserFactory::refresh()->asManager()->withTokens()->create();
         $this->auditor = UserFactory::refresh()->asAuditor()->withTokens()->create();
@@ -56,9 +57,9 @@ class RemoveTest extends TestCase
     {
         $this->assertDatabaseHas('tasks', ['id' => $this->task->id]);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.destroy'), $this->task->only('id'));
 
-        $response->assertOk();
+        $response->assertNoContent();
         $this->assertSoftDeleted('tasks', $this->task->only('id'));
     }
 
@@ -66,9 +67,9 @@ class RemoveTest extends TestCase
     {
         $this->assertDatabaseHas('tasks', ['id' => $this->task->id]);
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->manager)->postJson(route('tasks.destroy'), $this->task->only('id'));
 
-        $response->assertOk();
+        $response->assertNoContent();
         $this->assertSoftDeleted('tasks', $this->task->only('id'));
     }
 
@@ -76,7 +77,7 @@ class RemoveTest extends TestCase
     {
         $this->assertDatabaseHas('tasks', ['id' => $this->task->id]);
 
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->auditor)->postJson(route('tasks.destroy'), $this->task->only('id'));
 
         $response->assertForbidden();
     }
@@ -85,9 +86,9 @@ class RemoveTest extends TestCase
     {
         $this->assertDatabaseHas('tasks', ['id' => $this->task->id]);
 
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->projectManager)->postJson(route('tasks.destroy'), $this->task->only('id'));
 
-        $response->assertOk();
+        $response->assertNoContent();
         $this->assertSoftDeleted('tasks', $this->task->only('id'));
     }
 
@@ -95,7 +96,7 @@ class RemoveTest extends TestCase
     {
         $this->assertDatabaseHas('tasks', ['id' => $this->task->id]);
 
-        $response = $this->actingAs($this->projectAuditor)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->projectAuditor)->postJson(route('tasks.destroy'), $this->task->only('id'));
 
         $response->assertForbidden();
     }
@@ -104,28 +105,28 @@ class RemoveTest extends TestCase
     {
         $this->assertDatabaseHas('tasks', ['id' => $this->task->id]);
 
-        $response = $this->actingAs($this->projectUser)->postJson(self::URI, $this->task->only('id'));
+        $response = $this->actingAs($this->projectUser)->postJson(route('tasks.destroy'), $this->task->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_remove_not_existing(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.destroy'));
 
         $response->assertValidationError();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('tasks.destroy'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('tasks.destroy'));
 
         $response->assertValidationError();
     }

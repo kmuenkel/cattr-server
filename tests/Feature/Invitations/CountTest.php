@@ -9,8 +9,6 @@ use Tests\TestCase;
 
 class CountTest extends TestCase
 {
-    private const URI = 'invitations/count';
-
     private User $admin;
     private User $user;
 
@@ -24,22 +22,22 @@ class CountTest extends TestCase
 
     public function test_count_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('invitations.count'));
 
         $response->assertOk();
-        $response->assertJson(['total' => Invitation::count()]);
+        $response->assertJson(['data' => ['total' => Invitation::count()]]);
     }
 
     public function test_count_as_user(): void
     {
-        $response = $this->actingAs($this->user)->getJson(self::URI);
+        $response = $this->actingAs($this->user)->getJson(route('invitations.count'));
 
         $response->assertForbidden();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('invitations.count'));
 
         $response->assertUnauthorized();
     }

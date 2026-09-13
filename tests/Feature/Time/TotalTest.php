@@ -11,8 +11,6 @@ use Tests\TestCase;
 
 class TotalTest extends TestCase
 {
-    private const URI = 'time/total';
-
     private const INTERVALS_AMOUNT = 10;
 
     private Collection $intervals;
@@ -32,32 +30,32 @@ class TotalTest extends TestCase
     {
         $requestData = [
             'start_at' => $this->intervals->min('start_at'),
-            'end_at' => $this->intervals->max('end_at')->addMinute(),
+            'end_at' => Carbon::parse($this->intervals->max('end_at'))->addMinute()->format('c'),
             'user_id' => $this->admin->id
         ];
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $requestData);
+        $response = $this->actingAs($this->admin)->postJson(route('time.total'), $requestData);
         $response->assertOk();
 
         $totalTime = $this->intervals->sum(static function ($interval) {
             return Carbon::parse($interval->end_at)->diffInSeconds($interval->start_at);
         });
 
-        $response->assertJson(['time' => $totalTime]);
-        $response->assertJsonFragment(['start' => $this->intervals->min('start_at')]);
-        $response->assertJsonFragment(['end' => $this->intervals->max('end_at')]);
+        $response->assertJson(['data' => ['time' => $totalTime]]);
+        $response->assertJson(['data' => ['start' => Carbon::make($this->intervals->min('start_at'))->format('Y-m-d H:i:s')]]);
+        $response->assertJson(['data' => ['end' => Carbon::make($this->intervals->max('end_at'))->format('Y-m-d H:i:s')]]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('time.total'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('time.total'));
 
         $response->assertValidationError();
     }

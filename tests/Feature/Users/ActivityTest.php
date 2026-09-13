@@ -8,8 +8,6 @@ use Tests\TestCase;
 
 class ActivityTest extends TestCase
 {
-    private const URI = 'users/activity';
-
     private User $admin;
 
     protected function setUp(): void
@@ -21,21 +19,20 @@ class ActivityTest extends TestCase
 
     public function test_update(): void
     {
-        /* @var \Carbon\Carbon $lastActivity */
         $lastActivity = $this->admin->last_activity;
 
-        $response = $this->actingAs($this->admin)->patchJson(self::URI);
+        $response = $this->actingAs($this->admin)->patchJson(route('users.ping'));
 
         $user = User::find($this->admin->id);
 
-        $response->assertOk();
+        $response->assertNoContent();
         $this->assertNotEquals($lastActivity->toString(), $user->last_activity->toString());
         $this->assertTrue($user->online);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->patchJson(self::URI);
+        $response = $this->patchJson(route('users.ping'));
 
         $response->assertUnauthorized();
     }

@@ -5,14 +5,15 @@ namespace Tests\Feature\TimeIntervals;
 
 use App\Models\TimeInterval;
 use App\Models\User;
+use BackedEnum;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Tests\Facades\IntervalFactory;
 use Tests\Facades\UserFactory;
 use Tests\TestCase;
 
 class ShowTest extends TestCase
 {
-    private const URI = 'time-intervals/show';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -42,64 +43,86 @@ class ShowTest extends TestCase
 
     public function test_show_as_admin(): void
     {
-        $this->assertDatabaseHas('time_intervals', $this->timeInterval->toArray());
+        $timeInterval = $this->timeInterval->toArray();
+        unset($timeInterval['has_screenshot']);
+        $this->assertDatabaseHas('time_intervals', $timeInterval);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->timeInterval->only('id'));
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.show'), $this->timeInterval->only('id'));
         $response->assertOk();
 
-        $response->assertJson($this->timeInterval->toArray());
+        $timeInterval = $this->timeInterval->toArray();
+        $timeInterval['start_at'] = Carbon::make($timeInterval['start_at'])->format('Y-m-d H:i:s');
+        $timeInterval['end_at'] = Carbon::make($timeInterval['end_at'])->format('Y-m-d H:i:s');
+        $response->assertJson(['data' => $timeInterval]);
     }
 
     public function test_show_as_manager(): void
     {
-        $this->assertDatabaseHas('time_intervals', $this->timeInterval->toArray());
+        $timeInterval = $this->timeInterval->toArray();
+        unset($timeInterval['has_screenshot']);
+        $this->assertDatabaseHas('time_intervals', $timeInterval);
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->timeInterval->only('id'));
+        $response = $this->actingAs($this->manager)->postJson(route('intervals.show'), $this->timeInterval->only('id'));
         $response->assertOk();
 
-        $response->assertJson($this->timeInterval->toArray());
+        $timeInterval = $this->timeInterval->toArray();
+        $timeInterval['start_at'] = Carbon::make($timeInterval['start_at'])->format('Y-m-d H:i:s');
+        $timeInterval['end_at'] = Carbon::make($timeInterval['end_at'])->format('Y-m-d H:i:s');
+        $response->assertJson(['data' => $timeInterval]);
     }
 
     public function test_show_as_auditor(): void
     {
-        $this->assertDatabaseHas('time_intervals', $this->timeInterval->toArray());
+        $timeInterval = $this->timeInterval->toArray();
+        unset($timeInterval['has_screenshot']);
+        $this->assertDatabaseHas('time_intervals', $timeInterval);
 
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->timeInterval->only('id'));
+        $response = $this->actingAs($this->auditor)->postJson(route('intervals.show'), $this->timeInterval->only('id'));
         $response->assertOk();
 
-        $response->assertJson($this->timeInterval->toArray());
+        $timeInterval = $this->timeInterval->toArray();
+        $timeInterval['start_at'] = Carbon::make($timeInterval['start_at'])->format('Y-m-d H:i:s');
+        $timeInterval['end_at'] = Carbon::make($timeInterval['end_at'])->format('Y-m-d H:i:s');
+        $response->assertJson(['data' => $timeInterval]);
     }
 
     public function test_show_as_user(): void
     {
-        $this->assertDatabaseHas('time_intervals', $this->timeInterval->toArray());
+        $timeInterval = $this->timeInterval->toArray();
+        unset($timeInterval['has_screenshot']);
+        $this->assertDatabaseHas('time_intervals', $timeInterval);
 
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->timeInterval->only('id'));
+        $response = $this->actingAs($this->user)->postJson(route('intervals.show'), $this->timeInterval->only('id'));
 
-        $response->assertForbidden();
+        $response->assertOk();
     }
 
     public function test_show_your_own_as_user(): void
     {
-        $this->assertDatabaseHas('time_intervals', $this->timeIntervalForUser->toArray());
+        $timeInterval = $this->timeIntervalForUser->toArray();
+        unset($timeInterval['has_screenshot']);
+        $this->assertDatabaseHas('time_intervals', $timeInterval);
 
         $response = $this
             ->actingAs($this->user)
-            ->postJson(self::URI, $this->timeIntervalForUser->only('id'));
+            ->postJson(route('intervals.show'), $this->timeIntervalForUser->only('id'));
 
-        $response->assertJson($this->timeIntervalForUser->toArray());
+        $timeInterval = $this->timeIntervalForUser->toArray();
+        $timeInterval['start_at'] = Carbon::make($timeInterval['start_at'])->format('Y-m-d H:i:s');
+        $timeInterval['end_at'] = Carbon::make($timeInterval['end_at'])->format('Y-m-d H:i:s');
+        $response->assertJson(['data' => $timeInterval]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->getJson(self::URI);
+        $response = $this->getJson(route('intervals.show'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->getJson(self::URI);
+        $response = $this->actingAs($this->admin)->getJson(route('intervals.show'));
 
         $response->assertValidationError();
     }

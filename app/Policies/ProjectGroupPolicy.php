@@ -20,7 +20,7 @@ class ProjectGroupPolicy
         return true;
     }
 
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
         return true;
     }

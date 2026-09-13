@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class ResendTest extends TestCase
 {
-    private const URI = 'invitations/resend';
-
     private User $admin;
     private User $manager;
     private User $auditor;
@@ -33,32 +31,32 @@ class ResendTest extends TestCase
 
     public function test_resend_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, ['id' => $this->invitation->id]);
+        $response = $this->actingAs($this->admin)->postJson(route('invitations.resend'), ['id' => $this->invitation->id]);
 
         $response->assertOk();
         $response->assertNotEquals(
-            $response->decodeResponseJson()['res']['expires_at'],
-            $this->invitation->expires_at->toISOString()
+            $response->decodeResponseJson()['data']['expires_at'],
+            $this->invitation->expires_at
         );
     }
 
     public function test_resend_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, ['id' => $this->invitation->id]);
+        $response = $this->actingAs($this->manager)->postJson(route('invitations.resend'), ['id' => $this->invitation->id]);
 
         $response->assertForbidden();
     }
 
     public function test_resend_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, ['id' => $this->invitation->id]);
+        $response = $this->actingAs($this->auditor)->postJson(route('invitations.resend'), ['id' => $this->invitation->id]);
 
         $response->assertForbidden();
     }
 
     public function test_resend_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, ['id' => $this->invitation->id]);
+        $response = $this->actingAs($this->user)->postJson(route('invitations.resend'), ['id' => $this->invitation->id]);
 
         $response->assertForbidden();
     }

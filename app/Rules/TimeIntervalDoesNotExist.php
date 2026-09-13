@@ -13,7 +13,7 @@ class TimeIntervalDoesNotExist implements ValidationRule
     /**
      * @var User
      */
-    private User $user;
+    private ?User $user;
 
     /**
      * @var Carbon

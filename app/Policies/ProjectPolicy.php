@@ -18,7 +18,13 @@ class ProjectPolicy
 
     public function view(User $user, Project $project): bool
     {
-        return $user->hasProjectRole(Role::ANY, $project->id);
+        return $user->hasProjectRole([
+            Role::ANY,
+            Role::ADMIN,
+            Role::MANAGER,
+            Role::AUDITOR,
+            Role::USER,
+        ], $project->id);
     }
 
     public function viewAny(): bool
@@ -37,12 +43,12 @@ class ProjectPolicy
             return false;
         }
 
-        return $user->hasRole(Role::MANAGER) || $user->hasProjectRole(Role::MANAGER, $project->id);
+        return $user->hasProjectRole(Role::MANAGER, $project->id);
     }
 
     public function updateMembers(User $user, Project $project): bool
     {
-        return $user->hasRole(Role::MANAGER) || $user->hasProjectRole(Role::MANAGER, $project->id);
+        return $user->hasProjectRole(Role::MANAGER, $project->id);
     }
 
     public function destroy(User $user, Project $project): bool
@@ -51,6 +57,6 @@ class ProjectPolicy
             return false;
         }
 
-        return $user->hasRole(Role::MANAGER);
+        return $user->hasProjectRole(Role::MANAGER, $project->id);
     }
 }

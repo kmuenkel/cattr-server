@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Projects;
 
+use App\Enums\Role;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Event;
 use Tests\Facades\ProjectFactory;
 use Tests\Facades\UserFactory;
 use Tests\TestCase;
@@ -12,8 +14,6 @@ use Tests\TestCase;
 class EditTest extends TestCase
 {
     use WithFaker;
-
-    private const URI = 'projects/edit';
 
     /** @var User $admin */
     private User $admin;
@@ -38,21 +38,24 @@ class EditTest extends TestCase
     {
         parent::setUp();
 
+        Event::fake();
+
         $this->admin = UserFactory::refresh()->asAdmin()->withTokens()->create();
         $this->manager = UserFactory::refresh()->asManager()->withTokens()->create();
         $this->auditor = UserFactory::refresh()->asAuditor()->withTokens()->create();
         $this->user = UserFactory::refresh()->asUser()->withTokens()->create();
 
         $this->project = ProjectFactory::create();
+        $this->project->update(['created_by' => $this->manager->getKey()]);
 
         $this->projectManager = UserFactory::refresh()->asUser()->withTokens()->create();
-        $this->projectManager->projects()->attach($this->project->id, ['role_id' => 1]);
+        $this->projectManager->projects()->attach($this->project->id, ['role_id' => Role::MANAGER]);
 
         $this->projectAuditor = UserFactory::refresh()->asUser()->withTokens()->create();
-        $this->projectAuditor->projects()->attach($this->project->id, ['role_id' => 3]);
+        $this->projectAuditor->projects()->attach($this->project->id, ['role_id' => Role::AUDITOR]);
 
         $this->projectUser = UserFactory::refresh()->asUser()->withTokens()->create();
-        $this->projectUser->projects()->attach($this->project->id, ['role_id' => 2]);
+        $this->projectUser->projects()->attach($this->project->id, ['role_id' => Role::USER]);
     }
 
     public function test_edit_as_admin(): void
@@ -60,10 +63,10 @@ class EditTest extends TestCase
         $this->project->name = $this->faker->text;
         $this->project->description = $this->faker->text;
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->admin)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->project->toArray()]);
+        $response->assertJson(['data' => $this->project->toArray()]);
         $this->assertDatabaseHas('projects', $this->project->toArray());
     }
 
@@ -72,10 +75,10 @@ class EditTest extends TestCase
         $this->project->name = $this->faker->text;
         $this->project->description = $this->faker->text;
 
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->manager)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->project->toArray()]);
+        $response->assertJson(['data' => $this->project->toArray()]);
         $this->assertDatabaseHas('projects', $this->project->toArray());
     }
 
@@ -84,7 +87,7 @@ class EditTest extends TestCase
         $this->project->name = $this->faker->text;
         $this->project->description = $this->faker->text;
 
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->auditor)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertForbidden();
     }
@@ -94,7 +97,7 @@ class EditTest extends TestCase
         $this->project->name = $this->faker->text;
         $this->project->description = $this->faker->text;
 
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->user)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertForbidden();
     }
@@ -104,10 +107,10 @@ class EditTest extends TestCase
         $this->project->name = $this->faker->text;
         $this->project->description = $this->faker->text;
 
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->projectManager)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertOk();
-        $response->assertJson(['res' => $this->project->toArray()]);
+        $response->assertJson(['data' => $this->project->toArray()]);
         $this->assertDatabaseHas('projects', $this->project->toArray());
     }
 
@@ -116,7 +119,7 @@ class EditTest extends TestCase
         $this->project->name = $this->faker->text;
         $this->project->description = $this->faker->text;
 
-        $response = $this->actingAs($this->projectAuditor)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->projectAuditor)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertForbidden();
     }
@@ -126,7 +129,7 @@ class EditTest extends TestCase
         $this->project->name = $this->faker->text;
         $this->project->description = $this->faker->text;
 
-        $response = $this->actingAs($this->projectUser)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->projectUser)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertForbidden();
     }
@@ -135,21 +138,21 @@ class EditTest extends TestCase
     {
         $this->project->id = $this->faker->randomNumber();
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->project->toArray());
+        $response = $this->actingAs($this->admin)->postJson(route('projects.edit'), $this->project->toArray());
 
         $response->assertValidationError();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('projects.edit'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('projects.edit'));
 
         $response->assertValidationError();
     }

@@ -8,9 +8,6 @@ use Tests\TestCase;
 
 class LogoutTest extends TestCase
 {
-    private const URI = 'auth/logout';
-    private const TEST_URI = 'auth/me';
-
     private User $user;
 
     protected function setUp(): void
@@ -28,18 +25,20 @@ class LogoutTest extends TestCase
         $this->assertNotEmpty($token[0]);
         $this->assertNotEmpty($token[0]['token']);
 
-        $response = $this->actingAs($token[0]['token'])->postJson(self::URI);
+        $response = $this->actingAs($token[0]['token'])->postJson(route('auth.logout'));
 
-        $response->assertOk();
+        $response->assertNoContent();
 
-        $response = $this->actingAs($token[0]['token'])->get(self::TEST_URI);
+        app('auth')->forgetGuards();
+
+        $response = $this->actingAs($token[0]['token'])->get(route('auth.me'));
 
         $response->assertUnauthorized();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('auth.logout'));
 
         $response->assertUnauthorized();
     }

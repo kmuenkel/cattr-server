@@ -27,7 +27,12 @@ class RegisterModulesEvents
     public static function broadcastEvent(string $entityType, string $action, $model): void
     {
         foreach (ChangeEvent::getRelatedUserIds($model) as $userId) {
-            broadcast(new ChangeEvent($entityType, $action, $model, $userId));
+            broadcast(app(ChangeEvent::class, [
+                'entityType' => $entityType,
+                'action' => $action,
+                'model' => $model,
+                'userId' => $userId
+            ]));
         }
     }
 
@@ -70,7 +75,7 @@ class RegisterModulesEvents
             }
 
             App::terminating(static function () use ($entityType, $action, $model) {
-                $items = is_array($model) || $model instanceof Collection ? $model : [$model];
+                $items = collect(is_array($model) || $model instanceof Collection ? $model : [$model])->filter();
                 foreach ($items as $item) {
                     static::broadcastEvent($entityType, $action, $item);
 

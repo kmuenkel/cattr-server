@@ -25,7 +25,7 @@ class InvitationService
         return Invitation::create([
             'email' => $user['email'],
             'key' => Str::uuid(),
-            'expires_at' => now()->addDays(self::EXPIRATION_TIME_IN_DAYS),
+            'expires_at' => now()->addDays(self::EXPIRATION_TIME_IN_DAYS)->format('Y-m-d H:i:s'),
             'role_id' => $user['role_id']
         ]);
     }
@@ -41,7 +41,7 @@ class InvitationService
     {
         return tap(Invitation::find($id))->update([
             'key' => Str::uuid(),
-            'expires_at' => now()->addDays(self::EXPIRATION_TIME_IN_DAYS)
+            'expires_at' => now()->addDays(self::EXPIRATION_TIME_IN_DAYS)->format('Y-m-d H:i:s')
         ]);
     }
 }

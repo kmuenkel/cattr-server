@@ -10,8 +10,6 @@ use Tests\TestCase;
 
 class ShowTest extends TestCase
 {
-    private const URI = 'projects/show';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -41,6 +39,7 @@ class ShowTest extends TestCase
         $this->user = UserFactory::refresh()->asUser()->withTokens()->create();
 
         $this->project = ProjectFactory::create();
+        $this->project->update(['created_by' => $this->manager->getKey()]);
 
         $this->projectManager = UserFactory::refresh()->asUser()->withTokens()->create();
         $this->projectManager->projects()->attach($this->project->id, ['role_id' => 1]);
@@ -54,69 +53,72 @@ class ShowTest extends TestCase
 
     public function test_show_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->project->only('id'));
+        $response = $this->actingAs($this->admin)->postJson(route('projects.show'), $this->project->only('id'));
 
         $response->assertOk();
-        $response->assertJson($this->project->toArray());
+        $response->assertJson(['data' => $this->project->toArray()]);
     }
 
     public function test_show_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, $this->project->only('id'));
+        $response = $this->actingAs($this->manager)->postJson(route('projects.show'), $this->project->only('id'));
 
         $response->assertOk();
-        $response->assertJson($this->project->toArray());
+        $response->assertJson(['data' => $this->project->toArray()]);
     }
 
     public function test_show_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, $this->project->only('id'));
+        $this->project->update(['created_by' => $this->auditor->getKey()]);
+        $response = $this->actingAs($this->auditor)->postJson(route('projects.show'), $this->project->only('id'));
 
         $response->assertOk();
-        $response->assertJson($this->project->toArray());
+        $response->assertJson(['data' => $this->project->toArray()]);
     }
 
     public function test_show_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, $this->project->only('id'));
+        $response = $this->actingAs($this->user)->postJson(route('projects.show'), $this->project->only('id'));
 
         $response->assertForbidden();
     }
 
     public function test_show_as_project_manager(): void
     {
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, $this->project->only('id'));
+        $response = $this->actingAs($this->projectManager)->postJson(route('projects.show'), $this->project->only('id'));
 
         $response->assertOk();
-        $response->assertJson($this->project->toArray());
+        $response->assertJson(['data' => $this->project->toArray()]);
     }
 
     public function test_show_as_project_auditor(): void
     {
-        $response = $this->actingAs($this->projectAuditor)->postJson(self::URI, $this->project->only('id'));
+        $this->project->update(['created_by' => $this->projectAuditor->getKey()]);
+        $response = $this->actingAs($this->projectAuditor)->postJson(route('projects.show'), $this->project->only('id'));
 
         $response->assertOk();
-        $response->assertJson($this->project->toArray());
+        $response->assertJson(['data' => $this->project->toArray()]);
     }
 
     public function test_show_as_project_user(): void
     {
-        $response = $this->actingAs($this->projectUser)->postJson(self::URI, $this->project->only('id'));
+        $this->project->update(['created_by' => $this->projectUser->getKey()]);
+        $response = $this->actingAs($this->projectUser)->postJson(route('projects.show'), $this->project->only('id'));
 
         $response->assertOk();
-        $response->assertJson($this->project->toArray());
+        $response->assertJson(['data' => $this->project->toArray()]);
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('projects.show'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('projects.show'));
 
         $response->assertValidationError();
     }

@@ -5,6 +5,7 @@ namespace Tests\Feature\TimeIntervals;
 use App\Models\Task;
 use App\Models\TimeInterval;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 use Tests\Facades\IntervalFactory;
 use Tests\Facades\TaskFactory;
 use Tests\Facades\UserFactory;
@@ -12,8 +13,6 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    private const URI = 'time-intervals/create';
-
     private User $admin;
     private Task $task;
 
@@ -23,19 +22,23 @@ class CreateTest extends TestCase
     {
         parent::setUp();
 
+        Event::fake();
+
         $this->admin = UserFactory::asAdmin()->withTokens()->create();
 
         $this->task = TaskFactory::forUser($this->admin)->create();
 
         $this->intervalData = IntervalFactory::createRandomModelDataWithRelation();
         $this->intervalData['user_id'] = $this->admin->id;
+
+        Event::fake();
     }
 
     public function test_create(): void
     {
         $this->assertDatabaseMissing('time_intervals', $this->intervalData);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->intervalData);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $this->intervalData);
 
         $response->assertOk();
         $this->assertDatabaseHas('time_intervals', $this->intervalData);
@@ -53,7 +56,7 @@ class CreateTest extends TestCase
         $newInterval['start_at'] = '1900-01-01 00:55:00';
         $newInterval['end_at'] = '1900-01-01 01:05:00';
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $newInterval);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $newInterval);
 
         $response->assertValidationError();
     }
@@ -70,7 +73,7 @@ class CreateTest extends TestCase
         $newInterval['start_at'] = '1900-01-01 01:00:00';
         $newInterval['end_at'] = '1900-01-01 01:10:00';
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $newInterval);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $newInterval);
 
         $response->assertValidationError();
     }
@@ -87,7 +90,7 @@ class CreateTest extends TestCase
         $newInterval['start_at'] = '1900-01-01 00:55:00';
         $newInterval['end_at'] = '1900-01-01 01:03:00';
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $newInterval);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $newInterval);
 
         $response->assertValidationError();
     }
@@ -104,7 +107,7 @@ class CreateTest extends TestCase
         $newInterval['start_at'] = '1900-01-01 01:03:00';
         $newInterval['end_at'] = '1900-01-01 01:10:00';
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $newInterval);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $newInterval);
 
         $response->assertValidationError();
     }
@@ -121,7 +124,7 @@ class CreateTest extends TestCase
         $newInterval['start_at'] = '1900-01-01 01:01:00';
         $newInterval['end_at'] = '1900-01-01 01:03:00';
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $newInterval);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $newInterval);
 
         $response->assertValidationError();
     }
@@ -138,7 +141,7 @@ class CreateTest extends TestCase
         $newInterval['start_at'] = '1900-01-01 00:55:00';
         $newInterval['end_at'] = '1900-01-01 01:10:00';
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $newInterval);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $newInterval);
 
         $response->assertValidationError();
     }
@@ -148,21 +151,21 @@ class CreateTest extends TestCase
         TimeInterval::create($this->intervalData);
         $this->assertDatabaseHas('time_intervals', $this->intervalData);
 
-        $response = $this->actingAs($this->admin)->postJson(self::URI, $this->intervalData);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'), $this->intervalData);
 
         $response->assertValidationError();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('intervals.create'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('intervals.create'));
 
         $response->assertValidationError();
     }

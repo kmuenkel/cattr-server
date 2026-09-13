@@ -70,7 +70,7 @@ class ProjectGroupController extends ItemController
         foreach (Filter::process(Filter::getQueryAdditionalRelationsFilterName(), []) as $with) {
             $query->with($with);
         }
-        
+
         QueryHelper::apply($query, $model, $filter);
 
         return Filter::process(

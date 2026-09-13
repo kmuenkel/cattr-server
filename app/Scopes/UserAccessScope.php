@@ -2,11 +2,11 @@
 
 namespace App\Scopes;
 
-use App\Exceptions\Entities\AuthorizationException;
 use App\Enums\Role;
-use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Throwable;
 
 class UserAccessScope implements Scope
@@ -19,17 +19,9 @@ class UserAccessScope implements Scope
      */
     public function apply(Builder $builder, Model $model): ?Builder
     {
-        if (!auth()->hasUser()) {
-            return null;
+        if (!($user = auth()->user() ?? request()->user())) {
+            return app()->runningInConsole() ? $builder : null;
         }
-
-        if (app()->runningInConsole()) {
-            return $builder;
-        }
-
-        $user = optional(request())->user();
-
-        throw_unless($user, new AuthorizationException);
 
         if ($user->hasRole([Role::ADMIN, Role::MANAGER, Role::AUDITOR])) {
             return $builder;
@@ -37,15 +29,11 @@ class UserAccessScope implements Scope
 
         return $builder
             ->where('id', $user->id)
-            ->orWhereHas('projectsRelation', static fn(Builder $builder) => $builder
-                ->whereIn('project_id', static fn(Builder $builder) => $builder
+            ->orWhereHas('projectsRelation', static fn (Builder $builder) => $builder
+                ->whereIn('project_id', static fn (QueryBuilder $builder) => $builder
                     ->from('projects_users')
                     ->select('project_id')
-                    ->where(static fn(Builder $builder) => $builder
-                        ->where('user_id', $user->id)
-                        ->where('role_id', Role::MANAGER->value))
-                    ->orWhere(static fn(Builder $builder) => $builder
-                        ->where('user_id', $user->id)
-                        ->where('role_id', Role::AUDITOR->value))));
+                    ->where('user_id', $user->id)
+                    ->whereIn('role_id', [Role::ADMIN->value, Role::MANAGER->value, Role::AUDITOR->value])));
     }
 }

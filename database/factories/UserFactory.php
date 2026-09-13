@@ -16,7 +16,7 @@ class UserFactory extends Factory
             'url' => '',
             'company_id' => 1,
             'avatar' => '',
-            'screenshots_state' => ScreenshotsState::REQUIRED,
+            'screenshots_state' => ScreenshotsState::REQUIRED->value,
             'manual_time' => 0,
             'computer_time_popup' => 300,
             'blur_screenshots' => 0,

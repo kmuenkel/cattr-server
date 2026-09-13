@@ -91,7 +91,7 @@ class TimeController extends Controller
         if ($validator->fails()) {
             return new JsonResponse(
                 Filter::process($this->getEventUniqueName('answer.error.time.total'), [
-                    'error_type' => 'validation',
+                    'error' => ['code' => 'validation'],
                     'message' => 'Validation error',
                     'info' => $validator->errors()
                 ]),
@@ -205,7 +205,7 @@ class TimeController extends Controller
         if ($validator->fails()) {
             return new JsonResponse(
                 Filter::process($this->getEventUniqueName('answer.error.time.total'), [
-                    'error_type' => 'validation',
+                    'error' => ['code' => 'validation'],
                     'message' => 'Validation error',
                     'info' => $validator->errors()
                 ]),

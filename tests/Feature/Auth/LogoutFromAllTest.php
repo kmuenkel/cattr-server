@@ -4,13 +4,15 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 use Tests\Facades\UserFactory;
 use Tests\TestCase;
 
 class LogoutFromAllTest extends TestCase
 {
-    private const URI = 'auth/logout-from-all';
-    private const TEST_URI = 'auth/me';
+    use RefreshDatabase;
 
     private User $user;
 
@@ -28,20 +30,21 @@ class LogoutFromAllTest extends TestCase
         $this->assertNotEmpty($tokens);
 
         foreach ($tokens as $token) {
-            $this->actingAs($token['token'])->get(self::TEST_URI)->assertOk();
+            $this->actingAs($token['token'])->get(route('auth.me'))->assertOk();
         }
 
-        $response = $this->actingAs($tokens[0]['token'])->postJson(self::URI);
-        $response->assertOk();
+        $response = $this->actingAs($tokens[0]['token'])->postJson(route('auth.logout_all'));
+        app('auth')->forgetGuards();
+        $response->assertNoContent();
 
         foreach ($tokens as $token) {
-            $this->actingAs($token['token'])->get(self::TEST_URI)->assertUnauthorized();
+            $this->actingAs($token['token'])->get(route('auth.me'))->assertUnauthorized();
         }
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('auth.logout_all'));
 
         $response->assertUnauthorized();
     }

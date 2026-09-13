@@ -13,8 +13,6 @@ class ShowTest extends TestCase
 {
     use WithFaker;
 
-    private const URI = 'project-members/show';
-
     /** @var User $admin */
     private User $admin;
     /** @var User $manager */
@@ -39,11 +37,19 @@ class ShowTest extends TestCase
         parent::setUp();
 
         $this->admin = UserFactory::refresh()->asAdmin()->withTokens()->create();
+        $this->admin->update(['email' => 'admin_' . $this->admin->email]);
+
         $this->manager = UserFactory::refresh()->asManager()->withTokens()->create();
+        $this->manager->update(['email' => 'manager_' . $this->manager->email]);
+
         $this->auditor = UserFactory::refresh()->asAuditor()->withTokens()->create();
+        $this->auditor->update(['email' => 'auditor_' . $this->auditor->email]);
+
         $this->user = UserFactory::refresh()->asUser()->withTokens()->create();
+        $this->user->update(['email' => 'user_' . $this->user->email]);
 
         $this->project = ProjectFactory::create();
+        $this->project->update(['created_by' => $this->manager->getKey()]);
 
         $this->projectManager = UserFactory::refresh()->asUser()->withTokens()->create();
         $this->projectManager->projects()->attach($this->project->id, ['role_id' => 1]);
@@ -57,70 +63,70 @@ class ShowTest extends TestCase
 
     public function test_show_as_admin(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, ['project_id' => $this->project->id]);
+        $response = $this->actingAs($this->admin)->postJson(route('projects_members.list'), ['project_id' => $this->project->id]);
 
         $response->assertOk();
     }
 
     public function test_show_as_manager(): void
     {
-        $response = $this->actingAs($this->manager)->postJson(self::URI, ['project_id' => $this->project->id]);
+        $response = $this->actingAs($this->manager)->postJson(route('projects_members.list'), ['project_id' => $this->project->id]);
 
         $response->assertOk();
     }
 
     public function test_show_as_auditor(): void
     {
-        $response = $this->actingAs($this->auditor)->postJson(self::URI, ['project_id' => $this->project->id]);
+        $response = $this->actingAs($this->auditor)->postJson(route('projects_members.list'), ['project_id' => $this->project->id]);
 
         $response->assertForbidden();
     }
 
     public function test_show_as_user(): void
     {
-        $response = $this->actingAs($this->user)->postJson(self::URI, ['project_id' => $this->project->id]);
+        $response = $this->actingAs($this->user)->postJson(route('projects_members.list'), ['project_id' => $this->project->id]);
 
         $response->assertForbidden();
     }
 
     public function test_show_as_project_manager(): void
     {
-        $response = $this->actingAs($this->projectManager)->postJson(self::URI, ['project_id' => $this->project->id]);
+        $response = $this->actingAs($this->projectManager)->postJson(route('projects_members.list'), ['project_id' => $this->project->id]);
 
         $response->assertOk();
     }
 
     public function test_show_as_project_auditor(): void
     {
-        $response = $this->actingAs($this->projectAuditor)->postJson(self::URI, ['project_id' => $this->project->id]);
+        $response = $this->actingAs($this->projectAuditor)->postJson(route('projects_members.list'), ['project_id' => $this->project->id]);
 
         $response->assertForbidden();
     }
 
     public function test_show_as_project_user(): void
     {
-        $response = $this->actingAs($this->projectUser)->postJson(self::URI, ['project_id' => $this->project->id]);
+        $response = $this->actingAs($this->projectUser)->postJson(route('projects_members.list'), ['project_id' => $this->project->id]);
 
         $response->assertForbidden();
     }
 
     public function test_not_existing_project(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI, ['project_id' => $this->faker->randomNumber()]);
+        $response = $this->actingAs($this->admin)->postJson(route('projects_members.list'), ['project_id' => $this->faker->randomNumber()]);
 
         $response->assertValidationError();
     }
 
     public function test_unauthorized(): void
     {
-        $response = $this->postJson(self::URI);
+        $response = $this->postJson(route('projects_members.list'));
 
         $response->assertUnauthorized();
     }
 
     public function test_without_params(): void
     {
-        $response = $this->actingAs($this->admin)->postJson(self::URI);
+        $response = $this->actingAs($this->admin)->postJson(route('projects_members.list'));
 
         $response->assertValidationError();
     }

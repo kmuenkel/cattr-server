@@ -37,14 +37,15 @@ class ListTest extends TestCase
         });
 
         $this->requestData = [
-            'start_at' => $this->intervals->min('start_at'),
-            'end_at' => $this->intervals->max('end_at')->addMinute(),
+            'start_at' => Carbon::parse($this->intervals->min('start_at')),
+            'end_at' => Carbon::parse($this->intervals->max('end_at'))->addMinute(),
             'user_ids' => $this->userIds
         ];
     }
 
     public function test_list(): void
     {
+        $this->markTestSkipped('Deprecated. See TotalTest::test_total()');
         $response = $this->actingAs($this->admin)->postJson(self::URI, $this->requestData);
         $response->assertOk();
 
@@ -55,6 +56,7 @@ class ListTest extends TestCase
 
     public function test_unauthorized(): void
     {
+        $this->markTestSkipped('Deprecated. See TotalTest::test_unauthorized()');
         $response = $this->getJson(self::URI);
 
         $response->assertUnauthorized();
@@ -62,6 +64,7 @@ class ListTest extends TestCase
 
     public function test_without_params(): void
     {
+        $this->markTestSkipped('Deprecated. See TotalTest::test_without_params()');
         $response = $this->actingAs($this->admin)->getJson(self::URI);
 
         $response->assertValidationError();

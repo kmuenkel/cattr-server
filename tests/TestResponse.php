@@ -77,12 +77,12 @@ class TestResponse extends BaseTestResponse
         $this->assertStatus($status);
 
         if ($type) {
-            $this->assertJson(['error_type' => $type]);
+            $this->assertJson(['error' => ['code' => $type]]);
         }
 
-        $structure = ['message', 'error_type'];
+        $structure = ['error' => ['message', 'code']];
         if ($hasInfo) {
-            $structure[] = 'info';
+            $structure['error'] = ['fields'];
         } else {
             PHPUnit::assertArrayNotHasKey('info', $this->decodeResponseJson());
         }
@@ -106,17 +106,17 @@ class TestResponse extends BaseTestResponse
         return $this->assertError(self::HTTP_FORBIDDEN, $type, $hasInfo);
     }
 
-    public function assertValidationError(string $type = 'validation', bool $hasInfo = true): TestResponse
+    public function assertValidationError(string $type = 'validation_failed', bool $hasInfo = true): TestResponse
     {
-        return $this->assertError(self::HTTP_BAD_REQUEST, $type, $hasInfo);
+        return $this->assertError(self::HTTP_UNPROCESSABLE_ENTITY, $type, $hasInfo);
     }
 
-    public function assertNotFound(string $type = 'query.item_not_found', bool $hasInfo = false): TestResponse
+    public function assertNotFound(string $type = 'page_not_found', bool $hasInfo = false): TestResponse
     {
         return $this->assertError(self::HTTP_NOT_FOUND, $type, $hasInfo);
     }
 
-    public function assertConflict(string $type = 'query.item_already_exists', bool $hasInfo = false): TestResponse
+    public function assertConflict(string $type = 'interval_already_deleted', bool $hasInfo = false): TestResponse
     {
         return $this->assertError(self::HTTP_CONFLICT, $type, $hasInfo);
     }

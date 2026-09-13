@@ -19,6 +19,14 @@ class EditTimeIntervalRequest extends CattrFormRequest
     {
         return [
             'id' => 'required|int|exists:time_intervals,id',
+            'start_at' => 'date',
+            'end_at' => 'date',
+            'task_id' => 'integer|exists:tasks,id',
+            'user_id' => 'integer|exists:users,id',
+            'mouse_fill' => 'integer',
+            'keyboard_fill' => 'integer',
+            'activity_fill' => 'integer',
+            'has_screenshot' => 'boolean'
         ];
     }
 }
