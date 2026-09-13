@@ -27,6 +27,7 @@ use Illuminate\Notifications\Notifiable;
 use Hash;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
  * App\Models\User
@@ -78,6 +79,7 @@ use Laravel\Sanctum\PersonalAccessToken;
  * @property-read int|null $time_intervals_count
  * @property-read Collection|PersonalAccessToken[] $tokens
  * @property-read int|null $tokens_count
+ * @property-read Collection|Project[] $ownedProjects
  * @method static EloquentBuilder|User active()
  * @method static EloquentBuilder|User admin()
  * @method static UserFactory factory(...$parameters)
@@ -118,7 +120,7 @@ use Laravel\Sanctum\PersonalAccessToken;
  * @method static QueryBuilder|User withoutTrashed()
  * @mixin EloquentIdeHelper
  */
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
     use SoftDeletes;
@@ -191,6 +193,7 @@ class User extends Authenticatable
         'nonce' => 'integer',
         'client_installed' => 'integer',
         'efficiency' => 'float',
+        'last_activity' => 'datetime'
     ];
 
     /**
@@ -251,6 +254,11 @@ class User extends Authenticatable
     public function universalReports(): HasMany
     {
         return $this->hasMany(UniversalReport::class, 'user_id');
+    }
+
+    public function ownedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'created_by');
     }
 
     /**
@@ -337,5 +345,15 @@ class User extends Authenticatable
     public function scopeActive(EloquentBuilder $query): EloquentBuilder
     {
         return $query->where('active', true);
+    }
+
+    public function getJWTIdentifier(): string
+    {
+        return $this->getKeyName();
+    }
+
+    public function getJWTCustomClaims(): array
+    {
+        return [];
     }
 }

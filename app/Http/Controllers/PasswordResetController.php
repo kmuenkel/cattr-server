@@ -10,8 +10,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use DB;
+use Illuminate\Support\Str;
 use Mail;
 use Password;
+use Tymon\JWTAuth\JWTGuard;
 use Validator;
 
 class PasswordResetController extends BaseController
@@ -225,7 +227,9 @@ class PasswordResetController extends BaseController
             throw new AuthorizationException(AuthorizationException::ERROR_TYPE_UNAUTHORIZED);
         }
 
-        $token = auth()->setTTL(config('auth.lifetime_minutes.jwt'))->refresh();
+        $token = auth() instanceof JWTGuard
+            ? auth()->setTTL(config('auth.lifetime_minutes.jwt'))->refresh()
+            : $request->user()->createToken(Str::uuid())->accessToken->token;
 
         return new JsonResponse([
             'access_token' => $token,
