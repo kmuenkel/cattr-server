@@ -8,7 +8,6 @@ use Filter;
 use Flugg\Responder\Exceptions\ConvertsExceptions;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Session\TokenMismatchException;
@@ -98,13 +97,12 @@ class Handler extends ExceptionHandler
                 return $item;
             })->toArray();
 
-        if (config('app.debug') === false){
+        if (config('app.debug') === false) {
             try {
                 $requestContent = Crypt::encryptString(json_encode($requestContent, JSON_THROW_ON_ERROR));
             } catch (Throwable $exception) {
             }
         }
-
 
         return array_merge(parent::context(), [
             'trace_id' => $traceId,
@@ -127,6 +125,17 @@ class Handler extends ExceptionHandler
             return $this->renderResponse($e);
         }
 
-        return responder()->error($e->getCode(), $e->getMessage())->respond();
+        $response = responder()->error($e->getCode(), $e->getMessage())->respond();
+        $data = $response->getData();
+
+        if (config('app.debug') && isset($data->error)) {
+            $data->error->trace = array_map(fn (array $item) => [
+                'line' => implode(':', array_filter([$item['file'] ?? null, $item['line'] ?? null])),
+                'function' => implode('::', array_filter([$item['class'] ?? null, $item['function'] ?? null])),
+            ], $e->getTrace());
+            $response->setData($data);
+        }
+
+        return $response;
     }
 }
