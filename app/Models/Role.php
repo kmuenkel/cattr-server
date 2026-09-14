@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * App\Models\Role
  *
  * @todo Find a way to delete this module. Currently used in many migrations =(
+ * TODO: Replace all Role usages in migrations with hard-coded Enum\Role usages
  *
  * @deprecated Since 4.0.0, but still can be used in some old migrations
  * @property int $id

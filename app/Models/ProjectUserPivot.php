@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class ProjectUserPivot extends Pivot
 {
+    protected $table = 'projects_users';
+
     /**
      * @var array
      */
