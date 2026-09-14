@@ -19,7 +19,6 @@ The demo app is available here: [demo.cattr.app](https://demo.cattr.app)
 
 ```
 composer install
-yarn
 ```
 
 After should be edited `.env` file (e.g. for DB connection), look at `.env.example` for examples
@@ -43,6 +42,12 @@ local server by default will be run as <http://127.0.0.1:8000>
 ```
 php artisan serve
 yarn dev
+```
+
+You may need to run:
+
+```
+unset YARN_DEV
 ```
 
 ### Generate IDE helpers

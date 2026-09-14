@@ -87,16 +87,20 @@
       "@php artisan generate:erd erd.svg --format=svg"
     ],
     "post-install-cmd" : [
-      "yarn"
+      "unset YARN_DIR && nvm use && yarn"
     ],
     "post-create-project-cmd": [
+      "@composer kg",
+      "@composer init"
+    ],
+    "kg": [
       "@php artisan storage:link",
       "@php artisan key:generate --ansi",
       "@php artisan jwt:secret"
     ],
     "init": [
       "@php artisan migrate --seed --seeder=InitialSeeder",
-      "@php artisan cattr:make:admin"
+      "@php artisan cattr:make:admin --o"
     ]
   },
   "config": {
